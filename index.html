@@ -8,22 +8,26 @@
     <title>PyM Technologies - Automatización y Sistemas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="pymlogo.png">
 </head>
 <body>
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">🚀 PyM Technologies</div>
-            <ul class="nav-menu">
+            <div class="logo">
+                <img src="pymlogo.png" alt="PyM Technologies" class="logo-img">
+                <span>Technologies</span>
+            </div>
+            <ul class="nav-menu" id="navMenu">
                 <li><a href="#servicios" class="nav-link">Servicios</a></li>
                 <li><a href="#about" class="nav-link">Acerca de</a></li>
                 <li><a href="#contacto" class="nav-link">Contacto</a></li>
             </ul>
-            <div class="hamburger">
+            <button type="button" class="hamburger" aria-label="Abrir menú" aria-expanded="false" aria-controls="navMenu">
                 <span></span>
                 <span></span>
                 <span></span>
-            </div>
+            </button>
         </div>
     </nav>
     
@@ -42,32 +46,32 @@
             <h2>Nuestros Servicios</h2>
             <div class="services-grid">
                 <div class="service-card">
-                    <i class="fas fa-cogs"></i>
+                    <i class="fas fa-cogs" aria-hidden="true"></i>
                     <h3>Automatización Industrial</h3>
                     <p>Optimizamos procesos de producción con soluciones de automatización personalizadas.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-robot"></i>
+                    <i class="fas fa-robot" aria-hidden="true"></i>
                     <h3>Sistemas Robóticos</h3>
                     <p>Implementamos robots colaborativos para aumentar productividad y eficiencia.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-cloud"></i>
+                    <i class="fas fa-cloud" aria-hidden="true"></i>
                     <h3>Soluciones en la Nube</h3>
                     <p>Migramos y gestionamos tus sistemas en plataformas cloud seguras y escalables.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-chart-line"></i>
+                    <i class="fas fa-chart-line" aria-hidden="true"></i>
                     <h3>Análisis de Datos</h3>
                     <p>Extraemos insights valiosos de tus datos para tomar decisiones estratégicas.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-shield-alt"></i>
+                    <i class="fas fa-shield-alt" aria-hidden="true"></i>
                     <h3>Ciberseguridad</h3>
                     <p>Protegemos tu infraestructura con soluciones de seguridad de clase mundial.</p>
                 </div>
                 <div class="service-card">
-                    <i class="fas fa-headset"></i>
+                    <i class="fas fa-headset" aria-hidden="true"></i>
                     <h3>Soporte 24/7</h3>
                     <p>Equipo de expertos disponible para resolver cualquier incidencia técnica.</p>
                 </div>
@@ -94,15 +98,15 @@
             <p class="contact-subtitle">¿Listo para transformar tu negocio? Ponte en contacto hoy mismo.</p>
             <div class="contact-info">
                 <div class="info-item">
-                    <i class="fas fa-phone"></i>
+                    <i class="fas fa-phone" aria-hidden="true"></i>
                     <p>+54 (11) 1234-5678</p>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-envelope"></i>
+                    <i class="fas fa-envelope" aria-hidden="true"></i>
                     <p>info@pymtech.com</p>
                 </div>
                 <div class="info-item">
-                    <i class="fas fa-map-marker-alt"></i>
+                    <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                     <p>Buenos Aires, Argentina</p>
                 </div>
             </div>
