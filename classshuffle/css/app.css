@@ -853,6 +853,17 @@ button.seat-off:hover { border-color: var(--primary); }
   .welcome-intro { padding-top: 0; }
   .field-grid { grid-template-columns: 1fr 1fr; }
   .segmented { grid-template-columns: 1fr; }
+  /* Phones: the room shrinks to fit the screen instead of overflowing it. */
+  .chart-scroll { margin: 0 -4px; }
+  .room:not(.room-compact) { --seat-col: minmax(40px, 1fr); --aisle-col: 8px; gap: 10px; }
+  .room-layout:not(.room-compact) { --aisle-col: minmax(24px, 40px); }
+  .room:not(.room-compact) .grid { gap: 8px 4px; grid-auto-rows: 56px; }
+  .room:not(.room-compact) .seat { padding: 13px 3px 4px; }
+  .room:not(.room-compact) .seat.join-r { margin-right: -4px; }
+  .room:not(.room-compact) .seat-label { left: 5px; font-size: 9.5px; }
+  .room:not(.room-compact) .seat-name { font-size: 11.5px; }
+  .room:not(.room-compact) .seat-empty { font-size: 10.5px; }
+  .room:not(.room-compact) .board { width: 92%; padding: 5px 8px; font-size: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
