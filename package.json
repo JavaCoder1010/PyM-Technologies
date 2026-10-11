@@ -6,7 +6,8 @@
   "scripts": {
     "start": "npx http-server -p 8000",
     "serve": "npx http-server -c-1",
-    "sync:pympocket": "node scripts/sync-pympocket.mjs"
+    "sync:pympocket": "node scripts/sync-pympocket.mjs",
+    "sync:classshuffle": "node scripts/sync-classshuffle.mjs"
   },
   "keywords": [
     "automatización",

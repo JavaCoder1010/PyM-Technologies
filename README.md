@@ -7,7 +7,7 @@ Sitio web profesional para PyM Technologies, empresa especializada en automatiza
 - ✅ Diseño responsive y moderno
 - ✅ Menú hamburguesa para dispositivos móviles
 - ✅ Sección de servicios con tarjetas interactivas
-- ✅ Sección de proyectos con PymPocket (demo en vivo en `/pympocket/`)
+- ✅ Sección de proyectos con PymPocket (demo en vivo en `/pympocket/`) y ClassShuffle (demo en `/classshuffle/`)
 - ✅ Formulario de contacto funcional
 - ✅ Animaciones suaves
 - ✅ Navegación activa
@@ -24,9 +24,12 @@ pym-technologies/
 ├── js/
 │   └── script.js       # JavaScript interactivo
 ├── img/pympocket/      # Capturas de PymPocket para la sección Proyectos
+├── img/classshuffle/   # Capturas de ClassShuffle para la sección Proyectos
 ├── pympocket/          # Demo de PymPocket (copia generada, no editar acá)
+├── classshuffle/       # ClassShuffle (copia generada, no editar acá)
 ├── scripts/
-│   └── sync-pympocket.mjs  # Copia ../PymPocket a ./pympocket
+│   ├── sync-pympocket.mjs     # Copia ../PymPocket a ./pympocket
+│   └── sync-classshuffle.mjs  # Copia ../PymClassShuffle a ./classshuffle
 ├── README.md           # Este archivo
 ├── .gitignore          # Archivos a ignorar en Git
 └── LICENSE             # Licencia del proyecto
@@ -42,6 +45,17 @@ npm run sync:pympocket
 
 - La copia del sitio es **solo demo**: el script activa `DEMO_ONLY` y quita la conexión con Supabase. Siempre abre con datos de ejemplo (que quedan solo en el navegador del visitante), sin login ni cuentas, y tiene un botón para reiniciarla.
 - **Crear cuenta** (en el sitio y dentro de la demo) lleva a la app real: <https://pympocket.netlify.app/>.
+
+### ClassShuffle dentro del sitio
+
+ClassShuffle (planos de asientos para el aula) se desarrolla en `../PymClassShuffle` y se publica en `/classshuffle/`. Antes de publicar, actualizá la copia:
+
+```bash
+npm run sync:classshuffle
+```
+
+- No tiene cuentas ni servidor: todo se guarda en el navegador del visitante, así que la copia es la app completa (sin tests ni archivos de desarrollo).
+- **Ver demo** abre `classshuffle/?demo`, que entra directo a un aula de ejemplo con alumnos ficticios y un plano ya generado.
 
 ## 🚀 Cómo Usar
 
