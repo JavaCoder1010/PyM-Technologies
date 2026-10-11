@@ -50,20 +50,20 @@ if (contactForm) {
 
         // Validación básica
         if (!name || !email || !message) {
-            alert('Por favor, completa todos los campos.');
+            alert(translate('form.missing'));
             return;
         }
 
         // Validar email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            alert('Por favor, ingresa un email válido.');
+            alert(translate('form.email'));
             return;
         }
 
         // Aquí puedes enviar los datos al servidor
         // Por ahora, mostramos un mensaje de éxito
-        alert(`¡Gracias, ${name}! Tu mensaje ha sido recibido. Nos pondremos en contacto pronto.`);
+        alert(translate('form.thanks', { name }));
 
         // Limpiar formulario
         contactForm.reset();

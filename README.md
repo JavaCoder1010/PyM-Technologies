@@ -5,6 +5,7 @@ Sitio web profesional para PyM Technologies, empresa especializada en automatiza
 ## 📋 Características
 
 - ✅ Diseño responsive y moderno
+- ✅ Español e inglés (selector ES / EN; recuerda la elección y, la primera vez, usa el idioma del navegador)
 - ✅ Menú hamburguesa para dispositivos móviles
 - ✅ Sección de servicios con tarjetas interactivas
 - ✅ Sección de proyectos con PymPocket (demo en vivo en `/pympocket/`) y ClassShuffle (demo en `/classshuffle/`)
@@ -30,6 +31,7 @@ pym-technologies/
 ├── scripts/
 │   ├── sync-pympocket.mjs     # Copia ../PymPocket a ./pympocket
 │   └── sync-classshuffle.mjs  # Copia ../PymClassShuffle a ./classshuffle
+├── i18n.js             # Textos en inglés y cambio de idioma
 ├── README.md           # Este archivo
 ├── .gitignore          # Archivos a ignorar en Git
 └── LICENSE             # Licencia del proyecto
@@ -46,6 +48,10 @@ npm run sync:pympocket
 - La copia del sitio es **solo demo**: el script activa `DEMO_ONLY` y quita la conexión con Supabase. Siempre abre con datos de ejemplo (que quedan solo en el navegador del visitante), sin login ni cuentas, y tiene un botón para reiniciarla.
 - **Crear cuenta** (en el sitio y dentro de la demo) lleva a la app real: <https://pympocket.netlify.app/>.
 
+### Idiomas
+
+El texto en español está escrito en `index.html`. Cada texto traducible lleva `data-i18n="clave"` (o `data-i18n-alt`, `data-i18n-placeholder`, `data-i18n-label` para atributos) y su versión en inglés está en `i18n.js`. Para agregar un texto nuevo: marcarlo en el HTML y sumar la clave en inglés.
+
 ### ClassShuffle dentro del sitio
 
 ClassShuffle (planos de asientos para el aula) se desarrolla en `../PymClassShuffle` y se publica en `/classshuffle/`. Antes de publicar, actualizá la copia:
@@ -56,7 +62,7 @@ npm run sync:classshuffle
 
 - No tiene cuentas ni servidor: todo se guarda en el navegador del visitante, así que la copia es la app completa (sin tests ni archivos de desarrollo).
 - **Ver demo** abre `classshuffle/?demo`, que entra directo a un aula de ejemplo con alumnos ficticios y un plano ya generado.
-- El script también genera `classshuffle/ClassShuffle.html`: la app completa en un solo archivo que se abre con doble clic, sin servidor ni internet. El botón **Descargar para usar sin internet** la ofrece. Guarda sus datos aparte de la versión web; para pasar un aula de una a otra se usan los backups (descargar e importar).
+- El script también genera `classshuffle/ClassShuffle.html`: la app completa en un solo archivo que se abre con doble clic, sin servidor ni internet. El botón **Descargar** la ofrece. Guarda sus datos aparte de la versión web; para pasar un aula de una a otra se usan los backups (descargar e importar).
 
 ## 🚀 Cómo Usar
 

@@ -100,6 +100,45 @@ body {
     opacity: 0.7;
 }
 
+.nav-menu {
+    margin-left: auto;
+}
+
+/* Selector de idioma (ES / EN) */
+.lang-switch {
+    display: flex;
+    margin-left: 1.75rem;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 999px;
+}
+
+.lang-option {
+    appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    background: none;
+    color: var(--text-inverse);
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: var(--transition);
+}
+
+.lang-option:hover {
+    opacity: 1;
+}
+
+.lang-option[aria-pressed="true"] {
+    background: var(--primary-color);
+    opacity: 1;
+}
+
 .hamburger {
     display: none;
     flex-direction: column;
@@ -623,6 +662,11 @@ button:focus-visible {
         display: flex;
     }
 
+    .lang-switch {
+        margin-left: auto;
+        margin-right: 1rem;
+    }
+
     .hamburger.active span:nth-child(1) {
         transform: rotate(-45deg) translate(-5px, 6px);
     }
@@ -657,12 +701,22 @@ button:focus-visible {
 
     .project-card {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 0;
         padding: 1.5rem;
+    }
+
+    /* En celular: primero el nombre de la app, después la captura y luego el resto */
+    .project-info {
+        display: contents;
+    }
+
+    .project-brand {
+        order: -2;
     }
 
     .project-media {
         order: -1;
+        margin-bottom: 1.5rem;
     }
 
     .shot-phone {
