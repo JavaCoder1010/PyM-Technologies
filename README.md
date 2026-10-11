@@ -24,7 +24,7 @@ pym-technologies/
 ├── js/
 │   └── script.js       # JavaScript interactivo
 ├── img/pympocket/      # Capturas de PymPocket para la sección Proyectos
-├── pympocket/          # App PymPocket publicada (copia generada, no editar acá)
+├── pympocket/          # Demo de PymPocket (copia generada, no editar acá)
 ├── scripts/
 │   └── sync-pympocket.mjs  # Copia ../PymPocket a ./pympocket
 ├── README.md           # Este archivo
@@ -40,8 +40,8 @@ PymPocket se desarrolla en su propia carpeta (`../PymPocket`) y se publica como 
 npm run sync:pympocket
 ```
 
-- **Ver demo** abre `pympocket/?demo=1`, que carga datos de ejemplo solo en el navegador del visitante (si no tiene datos propios).
-- Los datos de cada usuario quedan guardados según la dirección: una vez publicada, no conviene cambiar la ruta `/pympocket/`.
+- La copia del sitio es **solo demo**: el script activa `DEMO_ONLY` y quita la conexión con Supabase. Siempre abre con datos de ejemplo (que quedan solo en el navegador del visitante), sin login ni cuentas, y tiene un botón para reiniciarla.
+- **Crear cuenta** (en el sitio y dentro de la demo) lleva a la app real: <https://pympocket.netlify.app/>.
 
 ## 🚀 Cómo Usar
 

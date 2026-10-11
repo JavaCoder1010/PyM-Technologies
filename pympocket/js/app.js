@@ -11,9 +11,10 @@ import { disableBiometric, keepUnlocked, needsUnlock } from './lock.js';
 import { refreshRates, latestRate } from './rates.js';
 import { processRecurring } from './recurring.js';
 import { notifyIfDue } from './habits.js';
-import { formatDate, money } from './format.js';
+import { formatDate, formatDateTime, formatDayMonth, money } from './format.js';
 import { confirmDialog, installEventDelegation, onClick, toast } from './ui.js';
 import { isDemo, loadDemo } from './demo.js';
+import { APP_URL, DEMO_ONLY } from './config.js';
 import { authErrorText, hideAuth, offerBiometric, showAuth, showLock } from './views/auth.js';
 import * as home from './views/home.js';
 import * as movements from './views/movements.js';
@@ -89,7 +90,7 @@ function renderRateBadge() {
   const rate = latestRate();
   const badge = document.getElementById('rate-badge');
   badge.innerHTML = rate
-    ? `<span class="sr-only">${h(t('rates.badgeLabel'))}</span>US$ 1 = ${h(money(rate.USD, 'ARS'))} <span class="muted">· ${h(formatDate(rate.date).slice(0, 5))}</span>`
+    ? `<span class="sr-only">${h(t('rates.badgeLabel'))}</span>US$ 1 = ${h(money(rate.USD, 'ARS'))} <span class="muted">· ${h(formatDayMonth(rate.date))}</span>`
     : '';
   badge.title = rate ? t('rates.badgeTitle', { date: formatDate(rate.date) }) : '';
 }
@@ -102,7 +103,7 @@ function renderSyncBadge(status) {
   badge.dataset.state = state;
   badge.innerHTML = `${icon(state === 'offline' || state === 'error' ? 'cloud-off' : 'cloud')}<span class="sync-label">${h(label)}</span>`;
   badge.setAttribute('aria-label', `${label}. ${t('sync.syncNow')}`);
-  badge.title = status.lastSync ? t('sync.lastSync', { date: new Date(status.lastSync).toLocaleString('es-AR') }) : label;
+  badge.title = status.lastSync ? t('sync.lastSync', { date: formatDateTime(status.lastSync) }) : label;
   if (routeName() === 'mas') scheduleRender(); // la sección "Tu cuenta" muestra el estado
 }
 
@@ -112,10 +113,19 @@ function renderDemoBanner() {
   const el = document.getElementById('demo-banner');
   const demo = localStorage.getItem(MODE_KEY) === 'demo' && isDemo();
   el.hidden = !demo;
-  el.innerHTML = demo
-    ? `<p><strong>${h(t('demo.bannerTitle'))}</strong> ${h(t('demo.bannerText'))}</p>
-       <button type="button" class="btn btn-small btn-primary" data-action="exit-demo">${h(t('demo.exit'))}</button>`
-    : '';
+  if (!demo) {
+    el.innerHTML = '';
+    return;
+  }
+  // En la copia del portafolio (solo demo) se invita a la app real en vez de abrir un login acá.
+  el.innerHTML = DEMO_ONLY
+    ? `<p><strong>${h(t('demo.bannerTitle'))}</strong> ${h(t('demo.onlyText'))}</p>
+       <span class="demo-actions">
+         <button type="button" class="btn btn-small btn-ghost" data-action="reset-demo">${h(t('demo.reset'))}</button>
+         <a class="btn btn-small btn-primary" href="${h(APP_URL)}" target="_blank" rel="noopener">${h(t('demo.createAccount'))}</a>
+       </span>`
+    : `<p><strong>${h(t('demo.bannerTitle'))}</strong> ${h(t('demo.bannerText'))}</p>
+       <button type="button" class="btn btn-small btn-primary" data-action="exit-demo">${h(t('demo.exit'))}</button>`;
 }
 
 let queued = false;
@@ -138,8 +148,26 @@ function translateStatic() {
   for (const el of document.querySelectorAll('[data-i18n-aria]')) el.setAttribute('aria-label', t(el.dataset.i18nAria));
 }
 
+// ---------- Pantalla de carga ----------
+
+const SPLASH_MIN_MS = 900;
+let splashGone = false;
+
+/** Oculta la pantalla de carga con un fundido (después de un mínimo, para que no parpadee). */
+async function hideSplash() {
+  if (splashGone) return;
+  splashGone = true;
+  const wait = SPLASH_MIN_MS - performance.now();
+  if (wait > 0) await sleep(wait);
+  const el = document.getElementById('splash');
+  el.classList.add('splash-hide');
+  el.addEventListener('transitionend', () => el.remove(), { once: true });
+  setTimeout(() => el.remove(), 600); // por si no hay transición (movimiento reducido)
+}
+
 function storageError(err) {
   console.error(err);
+  hideSplash();
   hideAuth();
   main.innerHTML = `<div class="card"><h1>${h(t('errors.storageTitle'))}</h1><p>${h(t('errors.storage'))}</p></div>`;
 }
@@ -162,20 +190,31 @@ async function start() {
   }
   const inDemo = wantsDemo || localStorage.getItem(MODE_KEY) === 'demo';
 
+  // Copia del portafolio: siempre demo, sin login ni conexión con cuentas.
+  if (DEMO_ONLY) return startApp({ demo: true });
+
   if (!auth.isConfigured()) {
     if (inDemo) return startApp({ demo: true });
+    hideSplash();
     return showAuth('notConfigured');
   }
 
   const { session, type, error } = await auth.init();
   if (session) {
     if (localStorage.getItem(MODE_KEY) === 'demo') await leaveDemoData();
-    if (type === 'recovery') return showAuth('newPassword', { onDone: () => startApp() });
+    if (type === 'recovery') {
+      hideSplash();
+      return showAuth('newPassword', { onDone: () => startApp() });
+    }
     if (type) return startApp({ offerBiometric: true }); // llegó desde el email de confirmación
-    if (needsUnlock()) await showLock();
+    if (needsUnlock()) {
+      await hideSplash();
+      await showLock();
+    }
     return startApp();
   }
   if (inDemo) return startApp({ demo: true });
+  hideSplash();
   showAuth('login', {
     notice: error ? { tone: 'error', text: authErrorText({ code: error }) } : null,
     onDone: () => startApp({ offerBiometric: true }),
@@ -208,6 +247,7 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
 
   appStarted = true;
   render({ navigated: true });
+  hideSplash();
   subscribe(scheduleRender);
   if (!demo) {
     onSyncStatus(renderSyncBadge);
@@ -286,6 +326,13 @@ const reloadHome = () => {
 
 onClick({
   'sync-now': () => syncNow(),
+  'reset-demo': async () => {
+    if (!(await confirmDialog(t('demo.resetConfirm'), { confirm: t('demo.reset') }))) return;
+    await wipeLocal();
+    await loadDemo();
+    location.hash = '#/inicio';
+    toast(t('demo.resetDone'), { tone: 'success' });
+  },
   'exit-demo': async () => {
     await leaveDemoData();
     reloadHome();
@@ -351,4 +398,6 @@ document.addEventListener('keydown', (e) => {
   document.getElementById('fab').click();
 });
 
+// Resguardo: si algo inesperado frena el arranque, no queda la pantalla de carga para siempre.
+setTimeout(hideSplash, 8000);
 start();

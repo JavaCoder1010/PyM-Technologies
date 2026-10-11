@@ -1,10 +1,10 @@
 // Pantallas de cuenta: ingresar, crear cuenta, recuperar contraseña,
 // nueva contraseña y desbloqueo con huella/rostro.
-import { t } from '../i18n.js';
+import { LANGUAGES, language, setLanguage, t } from '../i18n.js';
 import { h } from '../util.js';
 import * as auth from '../auth.js';
 import { biometricAvailable, enableBiometric, markUnlocked, unlockWithBiometric } from '../lock.js';
-import { onClick, onSubmit, openDialog, closeDialog, toast } from '../ui.js';
+import { onChange, onClick, onSubmit, openDialog, closeDialog, toast } from '../ui.js';
 import { icon } from './common.js';
 
 const MIN_PASSWORD = 8;
@@ -33,11 +33,19 @@ function draw() {
     <div class="auth-card">
       <div class="auth-brand"><img src="icons/icon.svg" alt="" width="56" height="56"><span>Pym<strong>Pocket</strong></span></div>
       ${screens[screen]()}
+      ${languagePicker()}
     </div>
   </div>`;
   document.title = `${t(`auth.titles.${screen}`)} · PymPocket`;
   (root().querySelector('[autofocus]') ?? root().querySelector('h1'))?.focus();
 }
+
+/** Selector de idioma, disponible antes de ingresar. */
+const languagePicker = () => `<label class="auth-lang">${icon('globe')}<span class="sr-only">${h(t('appearance.language'))}</span>
+  <select data-change="set-language">${LANGUAGES.map((l) => `<option value="${l.code}" lang="${l.code}" ${l.code === language() ? 'selected' : ''}>${h(l.name)}</option>`).join('')}</select>
+</label>`;
+
+onChange({ 'set-language': (el) => setLanguage(el.value) });
 
 const notice = () =>
   message ? `<p class="auth-msg auth-msg-${message.tone}" role="${message.tone === 'error' ? 'alert' : 'status'}">${h(message.text)}</p>` : '';

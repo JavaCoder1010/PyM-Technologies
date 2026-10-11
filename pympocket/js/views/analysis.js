@@ -4,7 +4,7 @@
 import { t } from '../i18n.js';
 import { h, sum } from '../util.js';
 import { state, byId } from '../store.js';
-import { addMonths, currentMonth, formatDate, money, moneyShort, monthLabel, percent, todayISO } from '../format.js';
+import { addMonths, currentMonth, formatDate, formatDayMonth, money, moneyShort, monthLabel, percent, todayISO } from '../format.js';
 import {
   catName,
   categoriesByMonth,
@@ -174,7 +174,7 @@ function dailyCard(list, currency, rate) {
     <h2 id="an-daily">${h(t('analysis.daily'))}</h2>
     <div class="stats stats-small">
       <div class="stat"><span class="stat-label">${h(t('analysis.dailyAverage'))}</span><span class="stat-value">${h(money(total / elapsed, currency))}</span></div>
-      <div class="stat"><span class="stat-label">${h(t('analysis.peakDay'))}</span><span class="stat-value">${h(formatDate(peak.date).slice(0, 5))} · ${h(money(peak.value, currency))}</span></div>
+      <div class="stat"><span class="stat-label">${h(t('analysis.peakDay'))}</span><span class="stat-value">${h(formatDayMonth(peak.date))} · ${h(money(peak.value, currency))}</span></div>
     </div>
     ${columns(groups, { title: t('analysis.dailyTitle', { month: monthLabel(month) }), format: (v) => moneyShort(v, currency), labelEvery: 5 })}
     ${srTable(t('analysis.dailyTitle', { month: monthLabel(month) }), days.filter((d) => d.value).map((d) => [formatDate(d.date), money(d.value, currency)]))}
@@ -314,7 +314,7 @@ function renderYear() {
   const today = todayISO();
   const prevList = isCurrent ? inRange(`${year - 1}-01-01`, `${year - 1}${today.slice(4)}`) : inYear(year - 1);
   const cmpHeading = isCurrent
-    ? t('analysis.comparisonYearToDate', { year: year - 1, date: formatDate(today).slice(0, 5) })
+    ? t('analysis.comparisonYearToDate', { year: year - 1, date: formatDayMonth(today) })
     : t('analysis.comparisonYear', { year: year - 1 });
 
   return `${nav}${tabs.html}

@@ -4,8 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="description" content="PymPocket: registrá tus gastos en segundos y entendé en qué se va tu dinero. Pesos, dólares y euros.">
-  <meta name="theme-color" content="#6d28d9" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#121019" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#6d28d9">
+  <script>
+    // Tema antes de dibujar la página (así no hay un destello del tema equivocado).
+    // Preferencia guardada en este dispositivo: "auto" (como el sistema), "light" o "dark".
+    (function () {
+      var media = window.matchMedia('(prefers-color-scheme: dark)');
+      function apply() {
+        var pref = 'auto';
+        try { pref = localStorage.getItem('pympocket.theme') || 'auto'; } catch (e) {}
+        var dark = pref === 'dark' || (pref === 'auto' && media.matches);
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        document.querySelector('meta[name=theme-color]').setAttribute('content', dark ? '#121019' : '#6d28d9');
+      }
+      apply();
+      if (media.addEventListener) media.addEventListener('change', apply);
+      window.__pymApplyTheme = apply;
+    })();
+  </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="PymPocket">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -43,8 +59,77 @@
     <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.5-10A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9z"/></symbol>
     <symbol id="i-cloud-off" viewBox="0 0 24 24"><path d="M7 18a5 5 0 0 1-.5-10M10 6.3A6 6 0 0 1 18 9a4.5 4.5 0 0 1 2.5 7.6M17.5 18H7"/><path d="m3 3 18 18"/></symbol>
     <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-contrast" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
   </svg>
+
+  <!-- Pantalla de carga: la moneda cae en el bolsillo mientras arranca la app -->
+  <div id="splash" class="splash" role="status">
+    <svg class="splash-logo" viewBox="0 0 512 512" aria-hidden="true">
+      <defs>
+        <linearGradient id="splash-bg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#8b5cf6"/>
+          <stop offset="1" stop-color="#5b21b6"/>
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="112" fill="url(#splash-bg)"/>
+      <path d="M128 150h256v150c0 70-57 112-128 112S128 370 128 300z" fill="#fff"/>
+      <path class="splash-stitch" d="M150 182h212" stroke="#c4b5fd" stroke-width="10" stroke-dasharray="20 14" stroke-linecap="round"/>
+      <g class="splash-coin">
+        <circle cx="256" cy="292" r="62" fill="#6d28d9"/>
+        <text x="256" y="317" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="76" fill="#fff">$</text>
+      </g>
+    </svg>
+    <p class="splash-name">Pym<strong>Pocket</strong></p>
+    <div class="splash-bar" aria-hidden="true"><span></span></div>
+    <span class="sr-only" data-i18n="common.loading">Cargando…</span>
+  </div>
+  <script>
+    // Resguardo independiente del resto de la app: si los módulos no cargan
+    // (por ejemplo, al abrir el archivo con doble clic), hay un error al
+    // arrancar o tarda demasiado, la pantalla de carga avisa y ofrece reintentar.
+    (function () {
+      var splash = document.getElementById('splash');
+      function fail(reason) {
+        if (!document.body.contains(splash) || splash.getAttribute('data-failed')) return;
+        splash.setAttribute('data-failed', reason);
+        splash.querySelector('.splash-bar').hidden = true;
+        var box = document.createElement('div');
+        box.className = 'splash-error';
+        box.setAttribute('role', 'alert');
+        var lang = 'es';
+        try { lang = localStorage.getItem('pympocket.lang') || (navigator.language || 'es').slice(0, 2); } catch (e) {}
+        var texts = {
+          es: ['PymPocket no se puede abrir con doble clic.', 'Para probarla en tu computadora, usá el archivo <strong>Probar PymPocket.bat</strong> de la carpeta PymTech (o ver README.md).', 'No pudimos abrir PymPocket.', 'Puede ser una versión vieja guardada en este navegador.', 'Reintentar'],
+          en: ['PymPocket can’t be opened by double-clicking the file.', 'To try it on your computer, use <strong>Probar PymPocket.bat</strong> in the PymTech folder (or see README.md).', 'We couldn’t open PymPocket.', 'An old version may be saved in this browser.', 'Try again'],
+          pt: ['O PymPocket não pode ser aberto com clique duplo.', 'Para testar no computador, use o arquivo <strong>Probar PymPocket.bat</strong> da pasta PymTech (ou veja o README.md).', 'Não conseguimos abrir o PymPocket.', 'Pode ser uma versão antiga salva neste navegador.', 'Tentar de novo'],
+        };
+        var m = texts[lang] || texts.es;
+        box.innerHTML = location.protocol === 'file:'
+          ? '<p><strong>' + m[0] + '</strong></p><p>' + m[1] + '</p>'
+          : '<p><strong>' + m[2] + '</strong></p><p>' + m[3] + '</p><button type="button" class="btn btn-primary">' + m[4] + '</button>';
+        splash.appendChild(box);
+        var retry = box.querySelector('button');
+        if (retry) retry.onclick = function () {
+          retry.disabled = true;
+          var steps = [];
+          if (navigator.serviceWorker) steps.push(navigator.serviceWorker.getRegistrations().then(function (regs) { return Promise.all(regs.map(function (r) { return r.unregister(); })); }));
+          if (window.caches) steps.push(caches.keys().then(function (keys) { return Promise.all(keys.map(function (k) { return caches.delete(k); })); }));
+          Promise.all(steps).catch(function () {}).then(function () { location.reload(); });
+        };
+      }
+      // Un error durante el arranque solo se informa si la app no termina de abrir en unos segundos.
+      function failSoon(reason) { setTimeout(function () { fail(reason); }, 3000); }
+      window.__pymSplashFail = fail;
+      window.addEventListener('error', function () { failSoon('error'); });
+      window.addEventListener('unhandledrejection', function () { failSoon('error'); });
+      setTimeout(function () { fail('timeout'); }, 15000);
+      if (location.protocol === 'file:') fail('file');
+    })();
+  </script>
 
   <a class="skip-link" href="#main" data-i18n="nav.skip">Ir al contenido</a>
 
@@ -84,6 +169,6 @@
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
   <noscript><p class="card">PymPocket necesita JavaScript para funcionar.</p></noscript>
-  <script type="module" src="js/app.js"></script>
+  <script type="module" src="js/app.js" onerror="window.__pymSplashFail && window.__pymSplashFail('load')"></script>
 </body>
 </html>

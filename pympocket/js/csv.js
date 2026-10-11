@@ -64,15 +64,16 @@ export function parseCSV(text) {
   return rows.filter((r) => r.some((x) => x.trim() !== ''));
 }
 
+// Nombres de columna reconocidos (español, inglés y portugués, sin tildes).
 const HEADERS = {
-  date: ['fecha', 'date', 'dia'],
-  type: ['tipo', 'type', 'movimiento'],
-  amount: ['monto', 'importe', 'amount', 'valor', 'total'],
-  currency: ['moneda', 'currency', 'divisa'],
+  date: ['fecha', 'date', 'dia', 'data'],
+  type: ['tipo', 'type', 'movimiento', 'movimentacao'],
+  amount: ['monto', 'importe', 'amount', 'valor', 'total', 'value'],
+  currency: ['moneda', 'currency', 'divisa', 'moeda'],
   category: ['categoria', 'category', 'rubro'],
   subcategory: ['subcategoria', 'subcategory'],
-  description: ['descripcion', 'detalle', 'concepto', 'description', 'nota'],
-  paymentMethod: ['medio de pago', 'medio', 'forma de pago', 'payment'],
+  description: ['descripcion', 'detalle', 'concepto', 'description', 'nota', 'descricao', 'note'],
+  paymentMethod: ['medio de pago', 'medio', 'forma de pago', 'payment', 'payment method', 'forma de pagamento'],
 };
 
 function parseDate(s) {
@@ -91,7 +92,7 @@ function parseDate(s) {
 function parseCurrency(s) {
   const v = norm(s);
   if (!v) return 'ARS';
-  if (['usd', 'us$', 'u$s', 'dolar', 'dolares', 'u$d'].includes(v)) return 'USD';
+  if (['usd', 'us$', 'u$s', 'dolar', 'dolares', 'u$d', 'dollar', 'dollars'].includes(v)) return 'USD';
   if (['eur', '€', 'euro', 'euros'].includes(v)) return 'EUR';
   if (['ars', '$', 'peso', 'pesos'].includes(v)) return 'ARS';
   return null;
@@ -150,7 +151,7 @@ export function analyzeImport(text) {
     let type = 'expense';
     if (col.type != null) {
       const v = norm(r[col.type]);
-      type = ['ingreso', 'ingresos', 'income', 'entrada'].includes(v) ? 'income' : 'expense';
+      type = ['ingreso', 'ingresos', 'income', 'entrada', 'receita', 'receitas'].includes(v) ? 'income' : 'expense';
     } else if (signedFile && amount > 0) type = 'income';
     amount = Math.abs(amount);
 

@@ -1,6 +1,6 @@
 // Service worker: guarda la app para que abra y funcione sin conexión.
 // Al publicar cambios, subir VERSION para que los usuarios reciban la nueva versión.
-const VERSION = 'pympocket-v2.0.1';
+const VERSION = 'pympocket-v2.1.1';
 
 const APP_SHELL = [
   './',
@@ -21,7 +21,9 @@ const APP_SHELL = [
   'js/format.js',
   'js/habits.js',
   'js/i18n.js',
+  'js/i18n/en.js',
   'js/i18n/es.js',
+  'js/i18n/pt.js',
   'js/lock.js',
   'js/model.js',
   'js/plan.js',
@@ -29,6 +31,7 @@ const APP_SHELL = [
   'js/recurring.js',
   'js/store.js',
   'js/sync.js',
+  'js/theme.js',
   'js/ui.js',
   'js/util.js',
   'js/views/analysis.js',
@@ -58,11 +61,29 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+const LOCAL_DEV = ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname);
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   // La cotización del BCRA y otros orígenes van siempre a la red.
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  // Responde al instante desde la caché y la actualiza en segundo plano.
+  // En la computadora de desarrollo se pide siempre la versión nueva (y la
+  // caché solo se usa sin conexión), así los cambios se ven al recargar.
+  if (LOCAL_DEV) {
+    event.respondWith(
+      fetch(event.request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(VERSION).then((cache) => cache.put(event.request, copy));
+          }
+          return res;
+        })
+        .catch(() => caches.match(event.request, { ignoreSearch: true })),
+    );
+    return;
+  }
+  // Publicada: responde al instante desde la caché y la actualiza en segundo plano.
   event.respondWith(
     caches.open(VERSION).then((cache) =>
       cache.match(event.request, { ignoreSearch: true }).then((cached) => {

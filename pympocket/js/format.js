@@ -35,27 +35,39 @@ export function percent(ratio, decimals = 1) {
   return `${nf(0, decimals).format(ratio * 100)} %`;
 }
 
-/** Monto para editar en un campo: 1234,5 */
-export const amountForInput = (n) => (n == null ? '' : String(n).replace('.', ','));
+/** Separador decimal del idioma actual ("," en español y portugués, "." en inglés). */
+export const decimalSeparator = () =>
+  new Intl.NumberFormat(locale()).formatToParts(1.5).find((p) => p.type === 'decimal')?.value ?? ',';
+
+/** Monto para editar en un campo: 1234,5 (o 1234.5 en inglés). */
+export const amountForInput = (n) => (n == null ? '' : String(n).replace('.', decimalSeparator()));
 
 /**
- * Interpreta montos escritos a mano: "1.234,56", "1234,5", "1234.56", "1.500".
- * La coma es separador decimal; el punto, de miles (salvo "12.5").
+ * Interpreta montos escritos a mano según el idioma: en español "1.234,56",
+ * "1234,5" o "1.500"; en inglés "1,234.56", "1234.5" o "1,500". Si aparecen
+ * los dos separadores, el último es el decimal.
  */
 export function parseAmount(input) {
   if (typeof input === 'number') return input;
   let s = String(input ?? '').trim().replace(/[^\d.,-]/g, '');
   if (!s) return NaN;
+  const commaDecimal = decimalSeparator() === ',';
   const lastComma = s.lastIndexOf(',');
   const lastDot = s.lastIndexOf('.');
+  // Un solo tipo de separador: es de miles si se repite o si lleva justo 3 cifras
+  // detrás y no es el decimal del idioma; si no, es el decimal.
+  const single = (sep, isLocaleDecimal) => {
+    const parts = s.split(sep);
+    const thousands = parts.length > 2 || (!isLocaleDecimal && parts.at(-1).length === 3);
+    return thousands ? parts.join('') : parts.join('.');
+  };
   if (lastComma > -1 && lastDot > -1) {
     s = lastComma > lastDot ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
   } else if (lastComma > -1) {
-    const parts = s.split(',');
-    s = parts.length === 2 ? parts.join('.') : parts.join('');
+    s = single(',', commaDecimal);
   } else if (lastDot > -1) {
-    const parts = s.split('.');
-    if (parts.length > 2 || parts.at(-1).length === 3) s = parts.join('');
+    // En español "1.500" son mil quinientos; "12.5" es decimal.
+    s = commaDecimal && s.split('.').at(-1).length === 3 ? s.replace(/\./g, '') : single('.', !commaDecimal);
   }
   const n = Number(s);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
@@ -71,12 +83,20 @@ export function parseISO(iso) {
   return new Date(y, m - 1, d || 1);
 }
 
-/** 10/10/2026 */
+/** 10/10/2026 (10/10/2026 en inglés de EE. UU. es mes/día/año). */
 export function formatDate(iso) {
   if (!iso) return '';
-  const [y, m, d] = iso.split('-');
-  return `${d}/${m}/${y}`;
+  return new Intl.DateTimeFormat(locale(), { day: '2-digit', month: '2-digit', year: 'numeric' }).format(parseISO(iso));
 }
+
+/** Día y mes: 10/10 */
+export function formatDayMonth(iso) {
+  return new Intl.DateTimeFormat(locale(), { day: '2-digit', month: '2-digit' }).format(parseISO(iso));
+}
+
+/** Fecha y hora de un momento (por ejemplo, la última sincronización). */
+export const formatDateTime = (isoTimestamp) =>
+  new Intl.DateTimeFormat(locale(), { dateStyle: 'short', timeStyle: 'short' }).format(new Date(isoTimestamp));
 
 /** "sábado, 10 de octubre" */
 export function formatDateLong(iso) {

@@ -1,12 +1,14 @@
 // Más: plan, moneda de referencia, recordatorios, datos (exportar/importar/respaldos), privacidad.
-import { t, tRaw } from '../i18n.js';
+import { LANGUAGES, language, t, tRaw } from '../i18n.js';
+import { THEMES, setTheme, theme } from '../theme.js';
+import { APP_URL, DEMO_ONLY } from '../config.js';
 import { h } from '../util.js';
 import { state, exportAll, importAll, listBackups, saveMany, setSetting } from '../store.js';
 import { currentUser, updatePassword } from '../auth.js';
 import { syncStatus } from '../sync.js';
 import { biometricAvailable, biometricEnabled, disableBiometric } from '../lock.js';
 import { authErrorText } from './auth.js';
-import { formatDate, todayISO } from '../format.js';
+import { formatDate, formatDateTime, todayISO } from '../format.js';
 import { latestRate, refreshRates } from '../rates.js';
 import { can, isPro, FREE_HISTORY_MONTHS } from '../plan.js';
 import { requestNotifications } from '../habits.js';
@@ -29,6 +31,7 @@ export function render() {
   const notifState = 'Notification' in window ? Notification.permission : 'unsupported';
   return `${pageHeader(t('more.title'))}
     ${accountSection()}
+    ${appearanceSection()}
     <nav class="card link-list" aria-label="${h(t('more.manage'))}">
       <a href="#/categorias">${icon('tag')}<span>${h(t('nav.categories'))}</span>${icon('chevron-right')}</a>
       <a href="#/recurrentes">${icon('repeat')}<span>${h(t('nav.recurring'))}</span>${!can('recurring') ? `<span class="pro-badge">${h(t('plan.proBadge'))}</span>` : ''}${icon('chevron-right')}</a>
@@ -91,7 +94,7 @@ export function render() {
       <p class="muted small">${h(t('data.backupsHint'))}</p>
       ${backups.length ? `<ul class="rows">${backups
         .map(
-          (b) => `<li><div class="row row-static"><span class="row-main"><span class="row-title">${h(new Date(b.createdAt).toLocaleString('es-AR'))}</span>
+          (b) => `<li><div class="row row-static"><span class="row-main"><span class="row-title">${h(formatDateTime(b.createdAt))}</span>
             <span class="row-meta">${h(t('data.backupCount', { n: b.dump.data.movements.length }))}</span></span>
             <button type="button" class="btn btn-small btn-ghost" data-action="restore-backup" data-id="${h(b.id)}">${h(t('data.restore'))}</button></div></li>`,
         )
@@ -104,7 +107,7 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.0.1 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.1.1 · PyM Technologies</p>`;
 }
 
 export function bind(root, refresh) {
@@ -198,6 +201,36 @@ onClick({
   },
 });
 
+// ---------- Apariencia e idioma ----------
+
+function appearanceSection() {
+  const current = theme();
+  return `<section class="card" id="apariencia" aria-labelledby="more-appearance">
+    <h2 id="more-appearance">${h(t('appearance.title'))}</h2>
+    <div class="stack">
+      <div class="field-group" role="group" aria-labelledby="theme-label">
+        <span id="theme-label" class="field-label">${h(t('appearance.theme'))}</span>
+        <div class="segmented segmented-wrap">
+          ${THEMES.map((k) => `<button type="button" data-action="set-theme" data-theme="${k}" aria-pressed="${k === current}">${icon(k === 'dark' ? 'moon' : k === 'light' ? 'sun' : 'contrast')} ${h(t(`appearance.themes.${k}`))}</button>`).join('')}
+        </div>
+        <p class="muted small" id="theme-hint">${h(t('appearance.themeHint'))}</p>
+      </div>
+      <label class="inline-field">${h(t('appearance.language'))}
+        <select data-change="set-language">
+          ${LANGUAGES.map((l) => `<option value="${l.code}" lang="${l.code}" ${l.code === language() ? 'selected' : ''}>${h(l.name)}</option>`).join('')}
+        </select></label>
+      <p class="muted small">${h(t('appearance.languageHint'))}</p>
+    </div>
+  </section>`;
+}
+
+onClick({
+  'set-theme': (el) => {
+    setTheme(el.dataset.theme);
+    rerender();
+  },
+});
+
 // ---------- Tu cuenta ----------
 
 function accountSection() {
@@ -206,7 +239,12 @@ function accountSection() {
     return `<section class="card card-accent" aria-labelledby="more-account">
       <h2 id="more-account">${h(t('account.demoTitle'))}</h2>
       <p>${h(t('account.demoText'))}</p>
-      <button type="button" class="btn btn-primary" data-action="exit-demo">${h(t('demo.exit'))}</button>
+      ${DEMO_ONLY
+        ? `<div class="button-grid">
+            <a class="btn btn-primary" href="${h(APP_URL)}" target="_blank" rel="noopener">${h(t('demo.createAccount'))}</a>
+            <button type="button" class="btn btn-ghost" data-action="reset-demo">${icon('repeat')} ${h(t('demo.reset'))}</button>
+          </div>`
+        : `<button type="button" class="btn btn-primary" data-action="exit-demo">${h(t('demo.exit'))}</button>`}
     </section>`;
   }
   const sync = syncStatus();
@@ -216,7 +254,7 @@ function accountSection() {
     <p class="account-email">${icon('user')} <strong>${h(user.email)}</strong></p>
     <p class="small sync-line" data-state="${syncState}">${icon(syncState === 'offline' || syncState === 'error' ? 'cloud-off' : 'cloud')}
       ${h(t(`sync.state.${syncState}`))}${sync.pending ? ` · ${h(t('sync.pendingCount', { n: sync.pending }))}` : ''}
-      ${sync.lastSync ? `<span class="muted"> · ${h(t('sync.lastSync', { date: new Date(sync.lastSync).toLocaleString('es-AR') }))}</span>` : ''}</p>
+      ${sync.lastSync ? `<span class="muted"> · ${h(t('sync.lastSync', { date: formatDateTime(sync.lastSync) }))}</span>` : ''}</p>
     <div class="button-grid">
       <button type="button" class="btn btn-ghost" data-action="sync-now">${icon('repeat')} ${h(t('sync.syncNow'))}</button>
       ${canBiometric
