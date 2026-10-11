@@ -22,9 +22,9 @@ const SAVE_ICON = { saved: 'check', saving: 'save', unsaved: 'dot', error: 'aler
 
 function headerHTML() {
   const doc = state.doc;
-  const brand = `<a class="brand" href="./" aria-label="${h(t('app.name'))}">
+  const brand = `<span class="brand" aria-label="${h(t('app.name'))}">
       <svg class="brand-logo" aria-hidden="true"><use href="#i-logo"/></svg>
-      <span class="brand-name">${h(t('app.name'))}</span></a>`;
+      <span class="brand-name">${h(t('app.name'))}</span></span>`;
   if (!doc) return brand;
   const generating = state.ui.generating;
   return `${brand}

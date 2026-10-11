@@ -3,7 +3,11 @@
 // module can be swapped for a server API without changing the rest of the app.
 import { migrate } from './model.js';
 
-const PREFIX = 'classshuffle.';
+// The single-file offline build (scripts/build-offline.mjs defines CLASSSHUFFLE_OFFLINE)
+// keeps its data apart from the web version; backups move classrooms between them.
+/* global CLASSSHUFFLE_OFFLINE */
+const OFFLINE = typeof CLASSSHUFFLE_OFFLINE !== 'undefined' && CLASSSHUFFLE_OFFLINE === true;
+const PREFIX = OFFLINE ? 'classshuffle-offline.' : 'classshuffle.';
 const INDEX_KEY = `${PREFIX}classrooms`;
 const LAST_KEY = `${PREFIX}last`;
 const docKey = (id) => `${PREFIX}classroom.${id}`;

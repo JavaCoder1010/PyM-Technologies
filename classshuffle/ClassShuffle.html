@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ClassShuffle: randomized classroom seating plans that follow your rules. Randomized. Not random.">
+  <meta name="theme-color" content="#4f46e5">
+  <title>ClassShuffle</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iOCIgZmlsbD0iIzRmNDZlNSIvPgogIDxyZWN0IHg9IjciIHk9IjgiIHdpZHRoPSI3LjUiIGhlaWdodD0iNi41IiByeD0iMS43NSIgZmlsbD0iI2ZmZiIvPgogIDxyZWN0IHg9IjE3LjUiIHk9IjgiIHdpZHRoPSI3LjUiIGhlaWdodD0iNi41IiByeD0iMS43NSIgZmlsbD0iI2ZmZiIgb3BhY2l0eT0iLjUiLz4KICA8cmVjdCB4PSI3IiB5PSIxNy41IiB3aWR0aD0iNy41IiBoZWlnaHQ9IjYuNSIgcng9IjEuNzUiIGZpbGw9IiNmZmYiIG9wYWNpdHk9Ii41Ii8+CiAgPHJlY3QgeD0iMTcuNSIgeT0iMTcuNSIgd2lkdGg9IjcuNSIgaGVpZ2h0PSI2LjUiIHJ4PSIxLjc1IiBmaWxsPSIjZmZmIi8+Cjwvc3ZnPgo=">
+  <style>
+/* ==========================================================
+   ClassShuffle — styles
+   Design tokens first, then layout, components and the seating
+   chart. Desktop and tablet first; prints a clean chart.
+   ========================================================== */
+
+:root {
+  color-scheme: light;
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --surface-2: #f8f9fc;
+  --surface-3: #eef0f6;
+  --text: #161a2e;
+  --muted: #5b6178;
+  --subtle: #8a90a6;
+  --border: #e3e6ef;
+  --border-strong: #cdd2e0;
+
+  --primary: #4f46e5;
+  --primary-strong: #4338ca;
+  --primary-soft: #eef0ff;
+  --primary-softer: #f6f7ff;
+  --primary-line: #c7cbfa;
+  --on-primary: #ffffff;
+
+  --ok: #157f3b;
+  --ok-soft: #e7f6ec;
+  --warn: #8f5300;
+  --warn-line: #f2c46b;
+  --warn-soft: #fff5df;
+  --danger: #c0262d;
+  --danger-line: #f1a9ac;
+  --danger-soft: #fdeced;
+  --focus: #2563eb;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+  --shadow-sm: 0 1px 2px rgb(22 26 46 / 0.06);
+  --shadow: 0 1px 2px rgb(22 26 46 / 0.05), 0 4px 16px rgb(22 26 46 / 0.06);
+  --shadow-lg: 0 10px 40px rgb(22 26 46 / 0.18);
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --topbar-h: 60px;
+  --seat-h: 64px;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 var(--font);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, p { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.sr-only {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+.muted { color: var(--muted); }
+.spacer { flex: 1; }
+.hint { color: var(--muted); font-size: 13px; }
+
+/* ---------- Buttons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: background-color 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.btn .icon { width: 16px; height: 16px; }
+.btn:disabled { opacity: 0.5; }
+.btn-sm { height: 30px; padding: 0 10px; font-size: 13px; }
+.btn-block { width: 100%; }
+.btn-primary { background: var(--primary); color: var(--on-primary); box-shadow: var(--shadow-sm); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-strong); }
+.btn-secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-sm); }
+.btn-secondary:hover:not(:disabled) { background: var(--surface-2); border-color: #b9bfd2; }
+.btn-ghost { color: var(--muted); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.btn-link { height: auto; padding: 4px 2px; color: var(--primary); font-weight: 600; }
+.btn-link:hover:not(:disabled) { color: var(--primary-strong); text-decoration: underline; }
+.btn-link-danger { color: var(--danger); }
+.btn-link-danger:hover:not(:disabled) { color: var(--danger); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: #a51f25; }
+.btn-danger-text { color: var(--danger); }
+.btn-danger-text:hover:not(:disabled) { background: var(--danger-soft); color: var(--danger); }
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  transition: background-color 0.15s var(--ease), color 0.15s var(--ease);
+}
+.icon-btn:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.icon-btn:disabled { opacity: 0.35; }
+.icon-btn .icon { width: 17px; height: 17px; }
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-warn { background: var(--warn-soft); color: var(--warn); }
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--topbar-h);
+  padding: 0 20px;
+  background: rgb(255 255 255 / 0.92);
+  backdrop-filter: saturate(1.4) blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.brand { display: flex; align-items: center; gap: 9px; color: var(--text); text-decoration: none; }
+.brand-logo { width: 28px; height: 28px; }
+.brand-name { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.topbar-sep { width: 1px; height: 24px; background: var(--border); }
+.classroom-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 320px;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font-weight: 600;
+}
+.classroom-switch:hover { background: var(--surface-3); }
+.classroom-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.classroom-switch .icon { width: 16px; height: 16px; color: var(--muted); }
+.save-status { display: flex; align-items: center; gap: 5px; color: var(--subtle); font-size: 12.5px; white-space: nowrap; }
+.save-status .icon { width: 14px; height: 14px; }
+.save-saved .icon { color: var(--ok); }
+.save-error { color: var(--danger); }
+.history { display: flex; gap: 2px; }
+.btn-generate { height: 38px; padding: 0 16px; }
+
+/* ---------- Workspace ---------- */
+
+.main { min-height: calc(100vh - var(--topbar-h)); }
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+  align-items: start;
+}
+.stage {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.stage:empty { display: none; }
+.stage > div:empty { display: none; }
+.stage-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; flex-wrap: wrap; min-height: 36px; }
+.stage-actions { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.plan-status { display: flex; align-items: center; gap: 7px; font-weight: 600; }
+.plan-status .icon { width: 18px; height: 18px; }
+.status-none { color: var(--muted); }
+.status-ok .icon { color: var(--ok); }
+.status-warnings .icon, .status-incomplete .icon { color: var(--warn); }
+.status-broken { color: var(--danger); }
+
+.notices { display: flex; flex-direction: column; gap: 10px; }
+.notices:empty { display: none; }
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid;
+  border-radius: var(--radius-sm);
+}
+.notice > .icon { margin-top: 1px; }
+.notice-body { flex: 1; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.notice-title { font-weight: 700; }
+.notice-success { background: var(--ok-soft); border-color: #b9e3c7; }
+.notice-success > .icon { color: var(--ok); }
+.notice-info { background: var(--primary-softer); border-color: var(--primary-line); }
+.notice-info > .icon { color: var(--primary); }
+.notice-error { background: var(--danger-soft); border-color: var(--danger-line); }
+.notice-error > .icon { color: var(--danger); }
+.notice .icon-btn { margin: -4px -4px 0 0; }
+.notice-rules { display: flex; flex-direction: column; gap: 6px; margin: 2px 0; }
+.notice-rules li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-xs);
+}
+.notice-rule-text { flex: 1 1 220px; }
+.notice-rule-actions { display: flex; gap: 10px; }
+.notice-hint { color: var(--muted); font-size: 13px; }
+.rule-chip { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 6px; border-radius: 4px; }
+.rule-hard { background: var(--primary-soft); color: var(--primary-strong); }
+.rule-soft { background: var(--surface-3); color: var(--muted); }
+
+.issues { border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.issues summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+}
+.issues summary::-webkit-details-marker { display: none; }
+.issues summary::after { content: ''; margin-left: auto; width: 8px; height: 8px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform 0.15s; }
+.issues[open] summary::after { transform: rotate(-135deg); }
+.issues summary .icon { width: 16px; height: 16px; color: var(--warn); }
+.issues:has(.issue-hard) { border-color: var(--danger-line); background: var(--danger-soft); }
+.issues:has(.issue-hard) summary .icon { color: var(--danger); }
+.issues-hint { padding: 0 12px 6px 36px; color: var(--muted); font-size: 13px; }
+.issues ul { display: flex; flex-direction: column; gap: 4px; padding: 0 12px 10px; }
+.issue { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
+.issue .icon { width: 15px; height: 15px; margin-top: 2px; }
+.issue-hard .icon { color: var(--danger); }
+.issue-soft .icon { color: var(--warn); }
+.stage-hint { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13.5px; padding: 0 2px; }
+.stage-hint .icon { color: var(--primary); }
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary-softer);
+  border: 1px dashed var(--primary-line);
+  color: var(--primary-strong);
+  font-size: 13px;
+}
+.demo-banner:empty { display: none; }
+.demo-banner span { flex: 1; }
+
+/* ---------- Seating chart ---------- */
+
+.chart-scroll { overflow-x: auto; padding: 4px 2px 8px; }
+.room { --seat-col: minmax(64px, 116px); --aisle-col: 26px; min-width: min-content; display: flex; flex-direction: column; align-items: stretch; gap: 14px; }
+.room-front { display: flex; justify-content: center; }
+.board {
+  width: min(60%, 520px);
+  padding: 7px 16px;
+  border-radius: 6px;
+  background: #2b3a4a;
+  color: #e8eef5;
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.room-back { text-align: center; color: var(--subtle); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.grid {
+  display: grid;
+  grid-auto-rows: var(--seat-h);
+  gap: 12px 8px;
+  justify-content: center;
+}
+.cell { border-radius: 10px; }
+.room-layout { --aisle-col: minmax(40px, 64px); }
+.cell-add {
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--subtle);
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+.cell-add .icon { opacity: 0; transition: opacity 0.15s; }
+.cell-add:hover, .cell-add:focus-visible, .cell-add.is-drop-target { border-color: var(--primary); color: var(--primary); background: var(--primary-softer); }
+.cell-add:hover .icon, .cell-add:focus-visible .icon, .cell-add.is-drop-target .icon { opacity: 1; }
+
+.seat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 14px 6px 6px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: center;
+  line-height: 1.2;
+  transition: border-color 0.15s var(--ease), background-color 0.15s var(--ease), box-shadow 0.15s var(--ease), transform 0.15s var(--ease);
+}
+button.seat:hover { border-color: var(--primary); }
+.seat.join-r { margin-right: -8px; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.seat.join-l { border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-color: var(--border); }
+.seat-label { position: absolute; top: 4px; left: 7px; font-size: 10px; font-weight: 600; color: var(--subtle); letter-spacing: 0.02em; }
+.seat-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.seat-name-sm { font-size: 11.5px; font-weight: 500; color: var(--muted); }
+.seat-empty { font-size: 11.5px; color: var(--subtle); }
+.seat-flag { position: absolute; top: 4px; right: 5px; width: 12px; height: 12px; color: var(--subtle); }
+.seat-flag + .seat-flag { right: 19px; }
+.seat-flag-bad { color: var(--danger); }
+.seat-flag-warn { color: var(--warn); }
+
+.seat.is-occupied { background: var(--primary-softer); border-color: var(--primary-line); }
+.seat.is-occupied .seat-name { color: #23206b; }
+.seat.is-empty { border-style: dashed; background: var(--surface); }
+.seat.is-neighbor { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px #c3c8f6; }
+.seat.is-warn { border-color: var(--warn-line); background: var(--warn-soft); }
+.seat.is-invalid { border-color: var(--danger); background: var(--danger-soft); }
+.seat.is-invalid .seat-name { color: #7d1419; }
+.seat.is-selected { border-color: var(--primary); background: var(--primary); box-shadow: 0 4px 14px rgb(79 70 229 / 0.35); z-index: 1; }
+.seat.is-selected .seat-name, .seat.is-selected .seat-label, .seat.is-selected .seat-empty, .seat.is-selected .seat-flag { color: #fff; }
+.seat.is-highlight { background: var(--primary-soft); border-color: var(--primary); }
+.seat-off {
+  border-style: dashed;
+  border-color: var(--border);
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface-3) 6px 12px);
+}
+.seat-off .seat-empty { color: var(--subtle); }
+button.seat-off:hover { border-color: var(--primary); }
+.seat-layout.is-selected { background: var(--primary); }
+.seat-layout.is-selected .seat-name-sm { color: #e6e7ff; }
+.seat.is-drop-target { border-color: var(--primary); border-style: solid; box-shadow: 0 0 0 3px rgb(79 70 229 / 0.25); transform: scale(1.03); }
+.seat.is-dragging { opacity: 0.45; }
+[data-drag] { touch-action: none; }
+.is-dragging-any, .is-dragging-any * { cursor: grabbing !important; user-select: none; }
+
+.seat-pick.is-picked { background: var(--primary); border-color: var(--primary); }
+.seat-pick.is-picked .seat-label, .seat-pick.is-picked .seat-name-sm, .seat-pick.is-picked .seat-flag { color: #fff; }
+
+.drag-ghost {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--primary);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Smaller chart inside dialogs */
+.mini-chart {
+  overflow: auto;
+  max-height: 300px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.room-compact { gap: 8px; }
+.room-compact { --seat-col: minmax(38px, 64px); --aisle-col: 12px; }
+.room-compact .grid { grid-auto-rows: 42px; gap: 6px 4px; }
+.room-compact .seat { padding: 12px 3px 3px; border-radius: 7px; }
+.room-compact .seat.join-r { margin-right: -4px; }
+.room-compact .seat-label { top: 3px; left: 5px; font-size: 9.5px; }
+.room-compact .seat-name { font-size: 10.5px; -webkit-line-clamp: 1; }
+.room-compact .seat-empty { display: none; }
+.room-compact .board { padding: 3px 10px; font-size: 9.5px; }
+.room-compact .room-back { display: none; }
+
+/* ---------- Tray (students without a seat) ---------- */
+
+.tray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 10px 12px;
+  border: 1px dashed var(--warn-line);
+  border-radius: var(--radius-sm);
+  background: var(--warn-soft);
+}
+.tray-title { font-weight: 700; font-size: 13px; color: var(--warn); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: grab;
+}
+.chip:hover { border-color: var(--primary); }
+.chip.is-selected { background: var(--primary); border-color: var(--primary); color: #fff; }
+.tray-hint { color: var(--muted); font-size: 12.5px; }
+
+/* ---------- Inspector ---------- */
+
+.inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius-sm);
+  background: var(--primary-softer);
+}
+.inspector-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.inspector-title { font-size: 16px; font-weight: 700; }
+.inspector-sub { color: var(--muted); font-size: 13px; }
+.inspector-notes { font-size: 13px; padding: 6px 10px; border-left: 3px solid var(--primary-line); background: var(--surface); border-radius: 4px; }
+.inspector-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.inspector .add-row { max-width: 360px; }
+.rule-lines { display: flex; flex-direction: column; gap: 5px; }
+.rule-line { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; }
+.rule-line .icon { width: 15px; height: 15px; margin-top: 2px; }
+.rs-ok > .icon, .rs-ok .rule-status .icon { color: var(--ok); }
+.rs-broken > .icon, .rs-broken .rule-status { color: var(--danger); }
+.rs-unmet > .icon, .rs-unmet .rule-status { color: var(--warn); }
+.rs-off > .icon, .rs-na > .icon, .rs-none > .icon { color: var(--subtle); }
+.layout-hint { display: flex; gap: 8px; align-items: flex-start; color: var(--muted); font-size: 13px; padding: 0 2px; }
+.layout-hint .icon { color: var(--primary); margin-top: 1px; }
+
+/* ---------- Layout toolbar ---------- */
+
+.layout-title { display: flex; align-items: center; gap: 8px; font-weight: 700; color: var(--primary-strong); }
+.layout-title .muted { font-weight: 500; font-size: 13px; }
+.stepper { display: inline-flex; align-items: center; gap: 2px; padding: 2px 4px 2px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface); }
+.stepper-label { font-size: 12.5px; color: var(--muted); margin-right: 4px; }
+.stepper-value { min-width: 22px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stepper .icon-btn { width: 26px; height: 26px; }
+.workspace.is-layout .stage { border-color: var(--primary-line); box-shadow: 0 0 0 3px var(--primary-softer), var(--shadow); }
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  position: sticky;
+  top: calc(var(--topbar-h) + 20px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - var(--topbar-h) - 40px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.tabs { display: flex; gap: 2px; padding: 6px; border-bottom: 1px solid var(--border); background: var(--surface-2); }
+.tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font-weight: 600;
+}
+.tab:hover { color: var(--text); background: var(--surface-3); }
+.tab[aria-selected='true'] { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm), 0 0 0 1px var(--border); }
+.tab-count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--surface-3); font-size: 11.5px; line-height: 18px; }
+.tab[aria-selected='true'] .tab-count { background: var(--primary-soft); color: var(--primary-strong); }
+.tab-panel { display: flex; flex-direction: column; gap: 12px; padding: 14px; overflow-y: auto; }
+
+.add-row { display: flex; gap: 8px; }
+.add-row input:not([type=hidden]) {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.add-row input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgb(79 70 229 / 0.15); }
+.panel-row { display: flex; justify-content: space-between; align-items: center; margin-top: -4px; }
+.counts { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--muted); font-size: 12.5px; }
+.counts-over { color: var(--danger); }
+.counts-over .icon { width: 14px; height: 14px; }
+.counts-warn { font-weight: 700; }
+.search-row { position: relative; }
+.search-row .icon { position: absolute; left: 10px; top: 9px; width: 15px; height: 15px; color: var(--subtle); }
+.search-row input { width: 100%; height: 34px; padding: 0 10px 0 32px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-2); }
+.search-row input:focus { outline: none; border-color: var(--primary); background: var(--surface); }
+
+.student-list { display: flex; flex-direction: column; margin: 0 -6px; }
+.student-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 2px 4px 2px 8px;
+  border-radius: var(--radius-sm);
+}
+.student-row:hover { background: var(--surface-2); }
+.student-row.is-selected { background: var(--primary-soft); }
+.student-row.is-excluded .student-text { color: var(--subtle); text-decoration: line-through; text-decoration-color: var(--border-strong); }
+.student-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  font-weight: 500;
+}
+.student-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.student-meta { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.meta-rules { display: inline-flex; align-items: center; gap: 2px; }
+.meta-rules .icon { width: 13px; height: 13px; }
+.meta-seat { padding: 1px 6px; border-radius: 4px; background: var(--surface-3); font-weight: 600; }
+.meta-seat.is-bad { background: var(--danger-soft); color: var(--danger); }
+.row-buttons { display: flex; align-items: center; gap: 0; }
+.student-row .row-buttons { opacity: 0; transition: opacity 0.15s; }
+.student-row:hover .row-buttons, .student-row:focus-within .row-buttons, .student-row.is-selected .row-buttons { opacity: 1; }
+@media (hover: none) { .student-row .row-buttons { opacity: 1; } }
+.student-row .icon-btn { width: 28px; height: 28px; }
+.check { width: 16px; height: 16px; margin: 0; accent-color: var(--primary); flex: none; }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 28px 12px; text-align: center; color: var(--muted); }
+.empty-icon { width: 32px; height: 32px; color: var(--primary-line); stroke-width: 1.6; }
+.empty-hint { color: var(--muted); font-size: 13px; padding: 4px 0; }
+
+.section-title { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.section-hint { color: var(--subtle); font-size: 12.5px; margin: 2px 0 8px; }
+.rule-group + .rule-group { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--border); }
+.rule-list { display: flex; flex-direction: column; gap: 6px; }
+.rule-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.rule-row.rs-broken { border-color: var(--danger-line); background: var(--danger-soft); }
+.rule-row.is-off { background: var(--surface-2); }
+.rule-row.is-off .rule-text { color: var(--muted); }
+.rule-icon { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 7px; background: var(--primary-soft); color: var(--primary); }
+.rule-icon .icon { width: 15px; height: 15px; }
+.rule-row.is-off .rule-icon { background: var(--surface-3); color: var(--subtle); }
+.rule-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.rule-text { font-size: 13.5px; }
+.rule-status { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; }
+.rule-status .icon { width: 13px; height: 13px; }
+.rule-actions { display: flex; align-items: center; gap: 0; }
+.rule-actions .icon-btn { width: 28px; height: 28px; }
+
+.switch { position: relative; display: inline-flex; margin-right: 4px; cursor: pointer; }
+.switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.switch-track { width: 30px; height: 18px; border-radius: 999px; background: var(--border-strong); transition: background-color 0.15s; }
+.switch-track::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-sm); transition: transform 0.15s var(--ease); }
+.switch input:checked + .switch-track { background: var(--primary); }
+.switch input:checked + .switch-track::after { transform: translateX(12px); }
+.switch input:focus-visible + .switch-track { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.panel-section { display: flex; flex-direction: column; gap: 8px; }
+.panel-section + .panel-section { padding-top: 12px; border-top: 1px solid var(--border); }
+.saved-list { display: flex; flex-direction: column; gap: 4px; }
+.saved-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 4px 6px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.saved-row > div:first-child { display: flex; flex-direction: column; min-width: 0; }
+.saved-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.saved-date { font-size: 12px; }
+.button-stack { display: flex; flex-direction: column; gap: 6px; }
+.button-stack .btn { justify-content: flex-start; }
+
+/* ---------- Dialogs and forms ---------- */
+
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+.dialog-wide { width: min(720px, calc(100vw - 32px)); }
+.dialog::backdrop { background: rgb(22 26 46 / 0.4); }
+.dialog[open] { animation: dialog-in 0.18s var(--ease); }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+.dialog-form { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.dialog-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dialog-head .icon-btn { margin: -6px -8px 0 0; }
+.dialog-title { display: flex; align-items: center; gap: 8px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.dialog-title .icon { color: var(--primary); }
+.dialog-subtitle { margin-top: 3px; color: var(--muted); }
+.dialog-text { display: flex; flex-direction: column; gap: 10px; }
+.dialog-foot { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding-top: 4px; }
+.dialog-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+
+.field { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; border: 0; min-width: 0; }
+.field-label { font-weight: 600; font-size: 13px; padding: 0; }
+.field-hint { color: var(--muted); font-size: 12.5px; margin-top: -2px; }
+.field-note { display: flex; gap: 8px; align-items: flex-start; padding: 9px 11px; border-radius: var(--radius-sm); background: var(--surface-2); color: var(--muted); font-size: 13px; }
+.field-note .icon { width: 16px; height: 16px; color: var(--primary); margin-top: 1px; }
+.input, .textarea {
+  width: 100%;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.textarea { height: auto; padding: 9px 11px; resize: vertical; line-height: 1.5; }
+.input:focus, .textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgb(79 70 229 / 0.15); }
+.input-sm { height: 32px; }
+.input-num { width: 84px; }
+.inline-field { display: flex; align-items: center; gap: 10px; }
+.field-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.field-num .input-num { width: 100%; }
+.check-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.check-block { align-items: flex-start; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.check-block .check { margin-top: 2px; }
+.check-block span { display: flex; flex-direction: column; gap: 2px; }
+.check-block small { color: var(--muted); font-size: 12.5px; }
+.check-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 2px 10px;
+  max-height: 210px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.check-list .check-label { padding: 5px 2px; font-size: 13.5px; min-width: 0; }
+.check-list .check-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.segmented { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.segment { position: relative; cursor: pointer; }
+.segment input { position: absolute; opacity: 0; }
+.segment > span { display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius-sm); }
+.segment small { color: var(--muted); font-size: 12.5px; }
+.segment input:checked + span { border-color: var(--primary); background: var(--primary-softer); }
+.segment input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+.rule-preview { padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-2); border: 1px solid var(--border); display: flex; flex-direction: column; gap: 4px; }
+.rule-preview p { font-size: 14.5px; }
+.form-error { color: var(--danger); font-weight: 600; font-size: 13px; }
+.form-error:empty { display: none; }
+
+.type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.type-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  text-align: left;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.type-card:hover { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-softer); }
+.type-icon { grid-row: 1 / 4; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: var(--primary-soft); color: var(--primary); }
+.type-name { font-weight: 700; }
+.type-desc { color: var(--muted); font-size: 13px; }
+.type-kind { color: var(--subtle); font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 4px; }
+
+.conflict-list { display: flex; flex-direction: column; gap: 10px; }
+.conflict-item { display: flex; flex-direction: column; gap: 6px; padding: 12px; border: 1px solid var(--danger-line); border-radius: var(--radius-sm); background: var(--danger-soft); }
+.conflict-reason { display: flex; gap: 8px; align-items: flex-start; font-weight: 600; }
+.icon-bad { color: var(--danger); margin-top: 1px; }
+.conflict-rule { color: var(--muted); font-size: 13px; padding-left: 26px; }
+.conflict-actions { display: flex; gap: 6px; padding-left: 26px; }
+
+/* ---------- Welcome ---------- */
+
+.welcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 48px;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 24px;
+  align-items: start;
+}
+.welcome-intro { display: flex; flex-direction: column; gap: 14px; padding-top: 24px; }
+.welcome-logo { width: 52px; height: 52px; }
+.welcome-title { font-size: 34px; font-weight: 800; letter-spacing: -0.02em; }
+.welcome-tagline { font-size: 18px; font-weight: 600; color: var(--primary); margin-top: -8px; }
+.welcome-text { color: var(--muted); font-size: 15.5px; max-width: 46ch; }
+.welcome-steps { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+.welcome-steps li { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+.step-num { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--primary-soft); color: var(--primary-strong); font-weight: 700; font-size: 13px; }
+.welcome-card { display: flex; flex-direction: column; gap: 12px; padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+.welcome-card .create-form { padding: 0; }
+.card-title { font-size: 17px; font-weight: 700; }
+.welcome-alt { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; padding-top: 10px; border-top: 1px solid var(--border); }
+.file-btn { cursor: pointer; }
+.file-btn:focus-within { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.classroom-list { display: flex; flex-direction: column; gap: 4px; }
+.classroom-row { display: flex; align-items: center; gap: 4px; padding: 2px 4px 2px 2px; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.classroom-row.is-current { border-color: var(--primary-line); background: var(--primary-softer); }
+.classroom-open { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 10px; border: 0; background: none; text-align: left; border-radius: 6px; }
+.classroom-open:hover { background: var(--surface-2); }
+.classroom-row-name { font-weight: 600; }
+.classroom-open .muted { font-size: 12.5px; }
+
+/* ---------- Toasts ---------- */
+
+.toasts { position: fixed; left: 50%; bottom: 20px; z-index: 200; display: flex; flex-direction: column; align-items: center; gap: 8px; transform: translateX(-50%); pointer-events: none; }
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(560px, calc(100vw - 32px));
+  padding: 10px 12px 10px 14px;
+  border-radius: 10px;
+  background: #1f2337;
+  color: #f3f4fa;
+  box-shadow: var(--shadow-lg);
+  pointer-events: auto;
+  animation: toast-in 0.2s var(--ease);
+}
+.toast .icon { width: 17px; height: 17px; }
+.toast-success .icon { color: #6ee59a; }
+.toast-warn .icon { color: #ffc861; }
+.toast-error .icon { color: #ff8a8f; }
+.toast-info .icon { color: #a9b0ff; }
+.toast-text { flex: 1; }
+.toast-action { padding: 4px 8px; border: 0; border-radius: 6px; background: rgb(255 255 255 / 0.12); color: #fff; font-weight: 700; }
+.toast-action:hover { background: rgb(255 255 255 / 0.2); }
+.toast-out { opacity: 0; transform: translateY(6px); transition: opacity 0.3s, transform 0.3s; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px); } }
+
+.print-sheet { display: none; }
+.noscript { padding: 40px; text-align: center; }
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1100px) {
+  .workspace { grid-template-columns: minmax(0, 1fr); }
+  .sidebar { position: static; max-height: none; }
+}
+@media (max-width: 760px) {
+  .topbar { gap: 8px; padding: 0 12px; }
+  .brand-name, .topbar-sep, .save-status span { display: none; }
+  .btn-generate span:not(.spinner) { display: none; }
+  .btn-generate { width: 40px; padding: 0; }
+  .workspace { padding: 12px; gap: 12px; }
+  .stage { padding: 12px; }
+  .stage-actions .btn span { display: none; }
+  .welcome { grid-template-columns: 1fr; gap: 24px; padding: 28px 16px; }
+  .welcome-intro { padding-top: 0; }
+  .field-grid { grid-template-columns: 1fr 1fr; }
+  .segmented { grid-template-columns: 1fr; }
+  /* Phones: the room shrinks to fit the screen instead of overflowing it. */
+  .chart-scroll { margin: 0 -4px; }
+  .room:not(.room-compact) { --seat-col: minmax(40px, 1fr); --aisle-col: 8px; gap: 10px; }
+  .room-layout:not(.room-compact) { --aisle-col: minmax(24px, 40px); }
+  .room:not(.room-compact) .grid { gap: 8px 4px; grid-auto-rows: 56px; }
+  .room:not(.room-compact) .seat { padding: 13px 3px 4px; }
+  .room:not(.room-compact) .seat.join-r { margin-right: -4px; }
+  .room:not(.room-compact) .seat-label { left: 5px; font-size: 9.5px; }
+  .room:not(.room-compact) .seat-name { font-size: 11.5px; }
+  .room:not(.room-compact) .seat-empty { font-size: 10.5px; }
+  .room:not(.room-compact) .board { width: 92%; padding: 5px 8px; font-size: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ---------- Print: only the seating chart ---------- */
+
+@media print {
+  @page { size: landscape; margin: 12mm; }
+  body { background: #fff; }
+  .topbar, .main, .toasts, .dialog { display: none !important; }
+  .print-sheet { display: block; color: #000; }
+  .print-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .print-head h1 { font-size: 20pt; }
+  .print-head p { color: #444; }
+  .print-sheet .room { min-width: 0; }
+  .print-sheet .room { --seat-col: minmax(0, 150px); --aisle-col: minmax(0, 36px); }
+  .print-sheet .grid { grid-auto-rows: 52px; gap: 8px 6px; }
+  .print-sheet .seat { border: 1.2px solid #555; background: #fff !important; box-shadow: none !important; }
+  .print-sheet .seat.is-empty { border-style: dashed; border-color: #999; }
+  .print-sheet .seat-off { background: repeating-linear-gradient(135deg, #fff 0 5px, #eee 5px 10px) !important; border-color: #bbb; }
+  .print-sheet .seat-name { color: #000 !important; font-size: 10.5pt; }
+  .print-sheet .seat-label { color: #555; }
+  .print-sheet .seat-flag { display: none; }
+  .print-sheet .board { background: #fff; color: #000; border: 1.5px solid #000; }
+  .print-roster { break-before: page; margin-top: 16px; }
+  .print-roster h2 { font-size: 14pt; margin-bottom: 8px; }
+  .print-roster ol { columns: 3; column-gap: 24px; }
+  .print-roster li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px solid #ddd; break-inside: avoid; }
+}
+
+</style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-logo" viewBox="0 0 32 32">
+      <rect width="32" height="32" rx="8" fill="#4f46e5"/>
+      <rect x="7" y="8" width="7.5" height="6.5" rx="1.75" fill="#fff"/>
+      <rect x="17.5" y="8" width="7.5" height="6.5" rx="1.75" fill="#fff" opacity=".5"/>
+      <rect x="7" y="17.5" width="7.5" height="6.5" rx="1.75" fill="#fff" opacity=".5"/>
+      <rect x="17.5" y="17.5" width="7.5" height="6.5" rx="1.75" fill="#fff"/>
+    </symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-rules" viewBox="0 0 24 24"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8M13 12h8M13 18h8"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><path d="M2 2l20 20"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></symbol>
+    <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7M12 19V5"/></symbol>
+    <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14M19 12l-7 7-7-7"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-unlink" viewBox="0 0 24 24"><path d="m18.84 12.25 1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5 5 0 0 0 7.07 7.07l1.71-1.71"/><path d="M8 2v3M2 8h3M16 22v-3M22 16h-3"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></symbol>
+    <symbol id="i-seat" viewBox="0 0 24 24"><path d="M7 17v-5a5 5 0 0 1 10 0v5"/><path d="M4 21v-4h16v4"/></symbol>
+    <symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M10 15V9M14 15V9"/></symbol>
+  </svg>
+
+  <header class="topbar" id="topbar"></header>
+  <main id="main" class="main"></main>
+
+  <dialog id="dialog" class="dialog"></dialog>
+  <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
+  <div id="print-sheet" class="print-sheet"></div>
+
+  <noscript><p class="noscript">ClassShuffle needs JavaScript to run.</p></noscript>
+  <script>
+(()=>{var Le=Object.freeze({frontBack:!1,diagonal:!1});function hn(e){let t="",s=e;do t=String.fromCharCode(65+s%26)+t,s=Math.floor(s/26)-1;while(s>=0);return t}function be({rows:e,desksPerRow:t,seatsPerDesk:s,aisles:n},o,l=[]){let i=new Map(l.map(m=>[`${m.row},${m.col}`,m])),d=s+(n?1:0),u=t*d-(n?1:0),b=[];for(let m=0;m<e;m++)for(let $=0;$<t;$++)for(let k=0;k<s;k++){let p=$*d+k,h=i.get(`${m},${p}`);b.push(h?{...h}:{id:o(),row:m,col:p,enabled:!0,label:""})}return{rows:e,cols:u,seats:b}}function gn(e){let t=[...new Set(e.map(d=>d.row))].sort((d,u)=>d-u),s=new Map(t.map((d,u)=>[d,hn(u)])),n=[...e].sort((d,u)=>d.row-u.row||d.col-u.col),o=new Map,l=-1,i=0;for(let d of n)d.row!==l&&(l=d.row,i=0),i++,o.set(d.id,d.label?.trim()||`${s.get(d.row)}${i}`);return o}var $e=e=>[...e].sort((t,s)=>t.row-s.row||t.col-s.col),Ht=new Set;function ue(e,t=Le){let s=new Map(e.map(p=>[p.id,p])),n=new Map(e.map(p=>[`${p.row},${p.col}`,p])),o=$e(e.filter(p=>p.enabled)),l=[[0,-1],[0,1]];t.frontBack&&l.push([-1,0],[1,0]),t.diagonal&&l.push([-1,-1],[-1,1],[1,-1],[1,1]);let i=new Map;for(let p of o){let h=new Set;for(let[y,S]of l){let C=n.get(`${p.row+y},${p.col+S}`);C?.enabled&&h.add(C.id)}i.set(p.id,h)}let d=[...new Set(o.map(p=>p.row))].sort((p,h)=>p-h),u=new Map(d.map((p,h)=>[p,h])),b=gn(e),m=new Map;function $(p){let h=m.get(p);if(h)return h;h=new Map([[p,0]]);let y=[p];for(;y.length;){let S=y.shift();for(let C of i.get(S)??Ht)h.has(C)||(h.set(C,h.get(S)+1),y.push(C))}return m.set(p,h),h}let k=p=>u.get(s.get(p)?.row)??-1;return{usableIds:o.map(p=>p.id),rowCount:d.length,seat:p=>s.get(p),isUsable:p=>!!s.get(p)?.enabled,neighbors:p=>i.get(p)??Ht,adjacent:(p,h)=>i.get(p)?.has(h)??!1,distance:(p,h)=>i.has(p)?$(p).get(h)??1/0:1/0,rowRank:k,inFrontRows:(p,h)=>i.has(p)&&k(p)<h,inBackRows:(p,h)=>i.has(p)&&k(p)>=d.length-h,label:p=>b.get(p)??"?"}}function Ot(e,t){let s=new Set(t),n=0;for(let o of t){if(!s.has(o))continue;n++,s.delete(o);let l=[o];for(;l.length;){let i=l.pop();for(let d of e.neighbors(i))s.has(d)&&(s.delete(d),l.push(d))}}return n}var Nt=1;function j(){if(globalThis.crypto?.randomUUID)return globalThis.crypto.randomUUID();let e=globalThis.crypto.getRandomValues(new Uint8Array(16));e[6]=e[6]&15|64,e[8]=e[8]&63|128;let t=[...e].map(s=>s.toString(16).padStart(2,"0")).join("");return`${t.slice(0,8)}-${t.slice(8,12)}-${t.slice(12,16)}-${t.slice(16,20)}-${t.slice(20)}`}var Ge=()=>new Date().toISOString();function Te({name:e,rows:t=5,desksPerRow:s=3,seatsPerDesk:n=2,aisles:o=!0}){let l=be({rows:t,desksPerRow:s,seatsPerDesk:n,aisles:o},j),i=Ge();return{schemaVersion:Nt,id:j(),name:e.trim(),createdAt:i,updatedAt:i,layout:{rows:l.rows,cols:l.cols},adjacency:{...Le},seats:l.seats,students:[],rules:[],plan:null,saved:[]}}function Ce(e,t=""){return{id:j(),name:e.trim(),notes:t,included:!0,createdAt:Ge()}}function ne(e,t={}){return{id:j(),type:e,studentIds:[],seatIds:[],strength:"hard",importance:"normal",params:{},active:!0,createdAt:Ge(),...t}}function Ke(e){return String(e??"").split(/\r?\n/).map(t=>t.replace(/^\s*(?:[-*•·]|\d+[.)])\s*/,"").replace(/\s+/g," ").trim()).filter(Boolean)}var K=e=>String(e??"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim().toLowerCase();function jt(e){let t=new Map,s=new Map;for(let n of e){let o=K(n.name),l=(t.get(o)??0)+1;t.set(o,l),s.set(n.id,l>1?`${n.name} (${l})`:n.name)}return s}function Pt(e){let t=new Map;for(let s of e){let n=K(s.name);t.set(n,[...t.get(n)??[],s.id])}return new Set([...t.values()].filter(s=>s.length>1).flat())}function Me(e){return{...e,schemaVersion:Nt,adjacency:{...Le,...e.adjacency},seats:e.seats??[],students:(e.students??[]).map(t=>({notes:"",included:!0,...t})),rules:(e.rules??[]).map(t=>({seatIds:[],params:{},importance:"normal",active:!0,...t})),plan:e.plan??null,saved:e.saved??[]}}var bn=!0,ze=bn?"classshuffle-offline.":"classshuffle.",ye=`${ze}classrooms`,Ve=`${ze}last`,Xe=e=>`${ze}classroom.${e}`,ve=(e,t)=>{try{let s=localStorage.getItem(e);return s?JSON.parse(s):t}catch{return t}},Ae=(e,t)=>localStorage.setItem(e,JSON.stringify(t));async function we(){return ve(ye,[]).sort((t,s)=>s.updatedAt.localeCompare(t.updatedAt))}async function Bt(e){let t=ve(Xe(e),null);return t?Me(t):null}async function Qe(e){Ae(Xe(e.id),e);let t=ve(ye,[]).filter(s=>s.id!==e.id);t.push({id:e.id,name:e.name,updatedAt:e.updatedAt,students:e.students.length,demo:!!e.demo}),Ae(ye,t)}async function Ft(e){localStorage.removeItem(Xe(e)),Ae(ye,ve(ye,[]).filter(t=>t.id!==e)),Je()===e&&localStorage.removeItem(Ve)}var Je=()=>ve(Ve,null);function Ut(e){try{Ae(Ve,e)}catch{}}var _="hard",X="soft",yn={normal:1,high:3},Wt=e=>yn[e.importance]??1,qt=new WeakMap;function ke(e,{unseatedOk:t=!1}={}){let s=(n,o)=>{let l=qt.get(n);return(!l||l.topo!==o)&&(l={topo:o,seats:e(n,o)},qt.set(n,l)),l.seats};return{allowedSeats:s,evaluate(n,o){let l=s(n,o.topo),i=n.studentIds.filter(d=>{let u=o.seatOf(d);return u?!l.has(u):!t});return{ok:i.length===0,penalty:i.length,studentIds:i,seatIds:i.map(o.seatOf).filter(Boolean)}}}}var Ze={rows:{min:1,max:20,default:2}},_t=e=>Math.max(1,Number(e.params?.rows)||Ze.rows.default),D={apart:{students:{min:2,max:8},seats:null,strengths:[_,X],defaultStrength:_,compatible:(e,t,s,n)=>!n.adjacent(t,s),evaluate(e,{topo:t,seatOf:s}){let n=e.studentIds.filter(s),o=new Set,l=0;for(let i=0;i<n.length;i++)for(let d=i+1;d<n.length;d++)t.adjacent(s(n[i]),s(n[d]))&&(l++,o.add(n[i]).add(n[d]));return{ok:l===0,penalty:l,studentIds:[...o],seatIds:[...o].map(s)}}},together:{students:{min:2,max:6},seats:null,strengths:[_,X],defaultStrength:_,compatible:(e,t,s,n)=>n.distance(t,s)<=e.studentIds.length-1,evaluate(e,{topo:t,seatOf:s}){let n=e.studentIds.map(s).filter(Boolean),l=e.studentIds.length-n.length+Math.max(0,Ot(t,n)-1);return{ok:l===0,penalty:l,studentIds:l?[...e.studentIds]:[],seatIds:l?n:[]}}},fixed:{students:{min:1,max:1},seats:{min:1,max:1},strengths:[_],defaultStrength:_,...ke((e,t)=>new Set(e.seatIds.filter(t.isUsable)))},preferred:{students:{min:1,max:1},seats:{min:1,max:12},strengths:[X],defaultStrength:X,...ke((e,t)=>new Set(e.seatIds.filter(t.isUsable)))},front:{students:{min:1,max:40},seats:null,params:Ze,strengths:[_,X],defaultStrength:_,...ke((e,t)=>new Set(t.usableIds.filter(s=>t.inFrontRows(s,_t(e)))))},back:{students:{min:1,max:40},seats:null,params:Ze,strengths:[_,X],defaultStrength:X,...ke((e,t)=>new Set(t.usableIds.filter(s=>t.inBackRows(s,_t(e)))))},avoid:{students:{min:1,max:40},seats:{min:1,max:200},strengths:[_,X],defaultStrength:_,...ke((e,t)=>{let s=new Set(e.seatIds);return new Set(t.usableIds.filter(n=>!s.has(n)))},{unseatedOk:!0})}},Yt=["apart","together","fixed","preferred","front","back","avoid"];function Re(e,t){let s=[];for(let n of e){let o=D[n.type];if(!o||n.active===!1)continue;let l=n.studentIds.filter(d=>t.has(d));if(l.length<o.students.min)continue;let i=o.strengths.includes(n.strength)?n.strength:o.defaultStrength;s.push({...n,studentIds:l,strength:i})}return s}function Gt(e){let t=D[e.type],s=new Set(e.studentIds).size;return s<t.students.min||s>t.students.max?"students":t.seats&&(e.seatIds.length<t.seats.min||e.seatIds.length>t.seats.max)?"seats":null}var Se=e=>D[e.type]?.strengths.includes(X)??!1;function te({seats:e,students:t,rules:s,adjacency:n},o,l=ue(e,n)){let i=[],d=[],u=[],b=new Set(t.map(h=>h.id)),m=new Set(t.filter(h=>h.included!==!1).map(h=>h.id)),$=new Map;for(let[h,y]of Object.entries(o??{}))if(b.has(h)){if(!m.has(h)){u.push({code:"excluded-seated",studentIds:[h],seatIds:[y]});continue}if(!l.seat(y)){i.push({code:"seat-missing",studentIds:[h],seatIds:[]});continue}if(!l.isUsable(y)){i.push({code:"seat-disabled",studentIds:[h],seatIds:[y]});continue}$.set(y,[...$.get(y)??[],h])}for(let[h,y]of $)y.length>1&&i.push({code:"seat-shared",studentIds:y,seatIds:[h]});for(let h of m)o?.[h]||u.push({code:"unseated",studentIds:[h],seatIds:[]});let p={topo:l,seatOf:h=>{let y=m.has(h)?o?.[h]:void 0;return y&&l.isUsable(y)?y:void 0}};for(let h of Re(s,m)){let y=D[h.type].evaluate(h,p);y.ok||(h.strength===_?i:d).push({code:"rule",ruleId:h.id,type:h.type,penalty:y.penalty,studentIds:y.studentIds,seatIds:y.seatIds})}return{valid:i.length===0,hard:i,soft:d,notices:u}}var vn={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"},r=e=>String(e??"").replace(/[&<>"']/g,t=>vn[t]);function Kt(e,t=300){let s,n=(...o)=>{clearTimeout(s),s=setTimeout(()=>e(...o),t)};return n.flush=(...o)=>{clearTimeout(s),e(...o)},n}var f=(e,t="icon")=>`<svg class="${t}" aria-hidden="true"><use href="#i-${e}"/></svg>`,zt=()=>new Promise(e=>{requestAnimationFrame(()=>setTimeout(e,0)),setTimeout(e,80)});function De(e,t,s="text/plain"){let n=URL.createObjectURL(new Blob([t],{type:s})),o=Object.assign(document.createElement("a"),{href:n,download:e});document.body.append(o),o.click(),o.remove(),setTimeout(()=>URL.revokeObjectURL(n),1e3)}var Ee=e=>String(e??"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^\w-]+/g,"-").replace(/^-+|-+$/g,"").toLowerCase()||"classroom";var wn=100,c={index:[],doc:null,past:[],future:[],save:"saved",ui:{tab:"students",selection:null,editingLayout:!1,generating:!1,outcome:null,studentQuery:""}},Vt=new Set,Xt=e=>Vt.add(e),A=()=>Vt.forEach(e=>e());function x(e,{history:t=!0}={}){let s=c.doc;if(!s)return;let n=structuredClone(s);e(n)!==!1&&(n.updatedAt=new Date().toISOString(),t&&(c.past.push(s),c.past.length>wn&&c.past.shift(),c.future=[]),c.doc=n,Zt(),A())}function U(){return c.past.length?(c.future.push(c.doc),c.doc=c.past.pop(),Qt(),!0):!1}function He(){return c.future.length?(c.past.push(c.doc),c.doc=c.future.pop(),Qt(),!0):!1}function Qt(){c.ui.selection=null,Zt(),A()}var Jt=Kt(async()=>{let e=c.doc;if(e){c.save="saving",A();try{await Qe(e),c.index=await we(),c.save=c.doc===e?"saved":"unsaved"}catch(t){console.error(t),c.save="error"}A()}},400);function Zt(){c.save="unsaved",Jt()}var Oe=()=>c.save==="unsaved"?Jt.flush():void 0;async function es(){c.index=await we()}async function pe(e){await Oe();let t=await Bt(e);return t?(et(t),!0):!1}async function Ne(e){await Oe(),et(e),await Qe(e),c.index=await we(),A()}function et(e){c.doc=e,c.past=[],c.future=[],c.save="saved",c.ui={...c.ui,selection:null,editingLayout:!1,outcome:null,studentQuery:""},e&&Ut(e.id),A()}async function ts(e){await Ft(e),c.index=await we(),c.doc?.id===e&&et(null),A()}var Q={doc:null,view:null,topo:null,seats:null,adjacency:null};function E(){let e=c.doc;if(Q.doc===e&&Q.view)return Q.view;(Q.seats!==e.seats||Q.adjacency!==e.adjacency)&&(Q.topo=ue(e.seats,e.adjacency),Q.seats=e.seats,Q.adjacency=e.adjacency);let t=Q.topo,s=new Map(e.students.map(g=>[g.id,g])),n=jt(e.students),o=e.plan?.assignments??{},l=new Map,i=new Map;for(let[g,R]of Object.entries(o))!s.get(g)?.included||!t.seat(R)||(l.set(R,g),i.set(g,R));let d=e.plan?te(e,o,t):null,u=new Map;for(let g of[...d?.hard??[],...d?.soft??[]])g.ruleId&&u.set(g.ruleId,g);let b=new Set(d?.hard.flatMap(g=>g.studentIds)),m=new Set(d?.hard.flatMap(g=>g.seatIds)),$=new Set(d?.soft.flatMap(g=>g.studentIds)),k=new Map,p=new Map;for(let g of e.rules){for(let R of g.studentIds)k.set(R,[...k.get(R)??[],g]);g.type==="fixed"&&g.active&&p.set(g.studentIds[0],g.seatIds[0])}let h=e.students.filter(g=>g.included),y=h.filter(g=>!i.has(g.id)),S=d?.hard.length??0,C=d?.soft.length??0,F=e.plan?S?"broken":y.length?"incomplete":C?"warnings":"ok":"none",Y={doc:e,topo:t,seatLabel:g=>t.label(g),studentLabel:g=>n.get(g)??"?",student:g=>s.get(g),duplicates:Pt(e.students),occupant:l,seatOf:i,validation:d,ruleIssue:u,brokenStudents:b,brokenSeats:m,unmetStudents:$,rulesOf:g=>k.get(g)??[],fixedSeat:p,includedCount:h.length,unseated:y,usableSeats:t.usableIds.length,status:F,ruleStatus(g){if(!g.active)return"off";let R=D[g.type],G=g.studentIds.filter(T=>s.get(T)?.included).length;if(!R||G<R.students.min)return"na";if(!e.plan)return"none";let w=u.get(g.id);return w?d.hard.includes(w)?"broken":"unmet":"ok"}};return Q.doc=e,Q.view=Y,Y}var L=(e,t,s)=>`${e} ${e===1?t:s}`,tt=e=>e===1?"is":"are",st=e=>Number(e)===1?"the front row":`the first ${e} rows`,nt=e=>Number(e)===1?"the back row":`the last ${e} rows`,ss=e=>e===1?"seat":"seats",ns={locale:"en-US",app:{name:"ClassShuffle",tagline:"Randomized. Not random.",storageUnavailable:"This browser is blocking storage, so your classrooms can\u2019t be saved. Check its privacy settings."},common:{and:"and",more:({count:e})=>`${e} more`,add:"Add",back:"Back",cancel:"Cancel",close:"Close",delete:"Delete",dismiss:"Dismiss",done:"Done",edit:"Edit",save:"Save",undo:"Undo"},header:{switch:"Switch or manage classrooms",history:"History",undo:"Undo",redo:"Redo",undoHint:"Undo (Ctrl+Z)",redoHint:"Redo (Ctrl+Shift+Z)",generate:"Generate seating plan",generateAnother:"Generate another arrangement",generating:"Generating\u2026",save:{saved:"Saved",saving:"Saving\u2026",unsaved:"Unsaved changes",error:"Couldn\u2019t save"}},welcome:{text:"Seat your class in seconds. Set your rules once \u2014 who sits apart, who sits together, who needs the front row \u2014 and every shuffle follows them.",steps:{layout:"Set up your classroom layout",students:"Add or paste your students",rules:"Add seating rules if you need them",generate:"Generate, adjust and print"},createTitle:"Create a classroom"},classrooms:{title:"Your classrooms",yours:"Your classrooms",new:"New classroom",create:"Create classroom",nameLabel:"Classroom name",namePlaceholder:"e.g. Period 3 \u2013 Biology",layoutLabel:"Starting layout",layoutLater:"You can add, remove and move individual seats later.",meta:({count:e,date:t})=>`${L(e,"student","students")} \xB7 ${t}`,rename:({name:e})=>`Rename ${e}`,renameTitle:"Rename classroom",delete:({name:e})=>`Delete ${e}`,deleteTitle:({name:e})=>`Delete \u201C${e}\u201D?`,deleteBody:({count:e})=>`Its layout, ${L(e,"student","students")}, rules and saved arrangements will be deleted from this browser. This can\u2019t be undone.`,deleteConfirm:"Delete classroom",deleted:({name:e})=>`\u201C${e}\u201D deleted.`,missing:"That classroom couldn\u2019t be found.",import:"Import backup file",imported:({name:e})=>`\u201C${e}\u201D imported.`,importFailed:"That file isn\u2019t a ClassShuffle backup."},demo:{tag:"Demo",name:"Demo classroom",open:"Explore a demo classroom",banner:"This is a demo classroom with made-up students. Try anything \u2014 it won\u2019t affect your own classrooms.",delete:"Delete demo"},stage:{label:"Seating chart",hintNoStudents:"Add students in the panel on the right, then generate a seating plan.",hintTooMany:"There are more students than usable seats. Add seats in Edit layout, or leave some students out of this arrangement.",hintReady:({count:e})=>`Ready to seat ${L(e,"student","students")}. Add rules if you need them, then click Generate seating plan.`},sidebar:{label:"Classroom details",students:"Students",rules:"Rules",saved:"Saved"},chart:{board:"Board \xB7 front of classroom",back:"Back of classroom",label:({rows:e,cols:t})=>`Classroom floor plan, ${e} rows by ${t} columns`,empty:"Empty",unavailable:"Unavailable",seat:"Seat {label}",seatOff:"Seat {label}, unavailable",seatWith:"Seat {label}, {name}",seatEmpty:"Seat {label}, empty",breaksRule:"Breaks a rule"},plan:{status:{none:"No seating plan yet",ok:"Follows all rules",warnings:({count:e})=>`${L(e,"preference","preferences")} not met`,incomplete:({count:e})=>`${L(e,"student","students")} without a seat`,broken:({count:e})=>`Breaks ${L(e,"rule","rules")}`},edited:"Edited",reset:"Reset",resetHint:"Go back to the last generated arrangement",resetDone:"Back to the last generated arrangement.",generated:"New seating plan ready. Every must-rule is followed.",onlyOne:"This is the only arrangement that follows all your must-rules, so it\u2019s the same as before.",unmetAfterGenerate:({count:e})=>`${L(e,"preference","preferences")} couldn\u2019t be met \u2014 see below.`,issuesHard:({count:e})=>`This arrangement breaks ${L(e,"rule","rules")}`,issuesSoft:({count:e})=>`${L(e,"preference","preferences")} not met`,issuesHardHint:"This can happen after rules or students change. Move students, or generate another arrangement.",unseatedTitle:({count:e})=>`Not seated (${e})`,unseatedHint:"Drag a name onto a seat, or click it and then a seat."},inspector:{label:"Selection",seat:"Seat {seat}",seatTitle:"Seat {seat}",unseated:"Not seated",excluded:"Left out of this arrangement",moveHint:"Click a seat to move {name} there, or drag. If someone sits there, they swap places.",noRules:"No rules for this student.",addRule:"Add rule",unseat:"Remove from seat",exclude:"Leave out of arrangement",include:"Include in arrangement",emptySeatHint:"Click a student\u2019s seat, or a name under \u201CNot seated\u201D, to move them here.",noPlanHint:"Generate a seating plan to fill the seats."},move:{title:"This move breaks a rule",subtitle:"Moving {name} to {seat}",unseatSubtitle:"Removing {name} from their seat",explain:"The move hasn\u2019t been made, because afterwards:",ruleIs:"Rule:",cancel:"Cancel move",appliedWithChange:"Rule changed and move made.",displaced:({name:e})=>`${e} no longer has a seat.`,softWarning:({count:e})=>`Moved. ${L(e,"preference","preferences")} no longer met.`},students:{nameLabel:"Name",addPlaceholder:"Add a student\u2026",paste:"Paste a list",removeAll:"Remove all",counts:({total:e,included:t,seats:s})=>e===t?`${L(e,"student","students")} \xB7 ${L(s,"usable seat","usable seats")}`:`${L(e,"student","students")} \xB7 ${t} in this arrangement \xB7 ${L(s,"usable seat","usable seats")}`,tooMany:({count:e})=>`${e} more than seats`,filter:"Find a student",noMatch:"No student matches that name.",empty:"No students yet. Type a name above, or paste a whole list at once.",excluded:"Left out",unseated:"No seat",includeLabel:({name:e})=>`Include ${e} in this arrangement`,includeHint:"Uncheck to leave this student out of the arrangement without deleting them",duplicate:"Same name",duplicateHint:"Another student has this name. Add an initial to tell them apart.",duplicateAdded:({name:e})=>`There was already a \u201C${e}\u201D. Both are kept; add an initial to tell them apart.`,rulesCount:({count:e})=>L(e,"rule","rules"),edit:({name:e})=>`Edit ${e}`,editTitle:"Edit student",notesLabel:"Notes (optional)",notesPlaceholder:"Anything to remember \u2014 only you see this",remove:({name:e})=>`Remove ${e}`,removed:({name:e})=>`${e} removed.`,removedWithRules:({name:e,count:t})=>`${e} removed, along with ${L(t,"rule","rules")} that no longer applied.`,removeAllTitle:({count:e})=>`Remove all ${L(e,"student","students")}?`,removeAllBody:"Their rules will be removed too. You can undo this right after.",removeAllConfirm:({count:e})=>`Remove ${e}`,removedAll:({count:e})=>`${L(e,"student","students")} removed.`,pasteTitle:"Paste a list of students",pasteSubtitle:"One name per line \u2014 you can paste a column straight from a spreadsheet.",pasteLabel:"Names, one per line",pastePlaceholder:`Ava Martin
+Liam Chen
+Mia Rossi`,pasteSkip:"Skip names already on the list",pasteSubmit:"Add students",pasteEmpty:"Paste or type names above.",pastePreview:({total:e,adding:t,known:s,repeated:n})=>[`${L(e,"name","names")} found`,`${t} will be added`,s?`${s} already on the list`:"",n?`${n} repeated`:""].filter(Boolean).join(" \xB7 "),pasteNothing:"No new names to add.",pasteDone:({count:e,skipped:t})=>`${L(e,"student","students")} added${t?` \xB7 ${L(t,"duplicate name","duplicate names")} skipped`:""}.`},rules:{add:"Add rule",empty:"No rules yet. Rules keep students apart or together, or in particular seats or rows.",emptyNoStudents:"Add students first, then set rules for them here.",nobody:"nobody",noSeats:"no seats",group:{hard:"Must",soft:"Try to"},groupHint:{hard:"Always followed. If they can\u2019t all be followed, ClassShuffle explains why.",soft:"Preferences: followed whenever possible."},strength:{hard:"Must",soft:"Try to"},strengthHint:{hard:"Never broken",soft:"A preference, skipped only if needed"},onlyStrength:{hard:"This rule is always followed.",soft:"This is a preference: it\u2019s followed whenever possible."},importance:{normal:"Normal importance",high:"High importance"},status:{ok:"Followed",broken:"Broken in the current plan",unmet:"Not met in the current plan",off:"Turned off",na:"Doesn\u2019t apply (students left out)",none:"Active"},turnOff:"Turn off",turnOn:"Turn on",activeLabel:"Rule active",makePreference:"Make it a preference",edit:"Edit rule",delete:"Delete rule",deleteConfirm:"Delete this rule?",deleted:"Rule deleted.",softened:"Rule changed to a preference.",added:"Rule added.",saved:"Rule saved.",pickTitle:"Add a rule",pickSubtitle:"What should ClassShuffle take into account?",types:{apart:{name:"Keep apart",desc:"Students who shouldn\u2019t sit next to each other.",kind:"Must or try to"},together:{name:"Keep together",desc:"Students who should sit next to each other.",kind:"Must or try to"},fixed:{name:"Fixed seat",desc:"A student who always sits in a specific seat.",kind:"Always"},preferred:{name:"Preferred seat",desc:"A seat a student should get when possible.",kind:"Preference"},front:{name:"Front of classroom",desc:"Students who need to sit near the board.",kind:"Must or try to"},back:{name:"Back of classroom",desc:"Students who should sit toward the back.",kind:"Must or try to"},avoid:{name:"Avoid seats",desc:"Seats or areas a student shouldn\u2019t sit in.",kind:"Must or try to"}},sentence:{apart:{hard:({names:e})=>`${e} must never sit next to each other.`,soft:({names:e})=>`Try to keep ${e} from sitting next to each other.`},together:{hard:({names:e})=>`${e} must sit next to each other.`,soft:({names:e})=>`Try to seat ${e} next to each other.`},fixed:{hard:({names:e,seats:t})=>`${e} always sits in seat ${t}.`,soft:({names:e,seats:t})=>`Try to seat ${e} in seat ${t}.`},preferred:{hard:({names:e,seats:t,count:s})=>`${e} must sit in ${s===1?"seat":"one of seats"} ${t}.`,soft:({names:e,seats:t,count:s})=>`${e} prefers ${s===1?"seat":"one of seats"} ${t}.`},front:{hard:({names:e,rows:t})=>`${e} must sit in ${st(t)}.`,soft:({names:e,rows:t})=>`Try to seat ${e} in ${st(t)}.`},back:{hard:({names:e,rows:t})=>`${e} must sit in ${nt(t)}.`,soft:({names:e,rows:t})=>`Try to seat ${e} in ${nt(t)}.`},avoid:{hard:({names:e,seats:t,count:s})=>`${e} must never sit in ${ss(s)} ${t}.`,soft:({names:e,seats:t,count:s})=>`Try to keep ${e} out of ${ss(s)} ${t}.`}},editor:{student:"Student",chooseStudent:"Choose a student\u2026",students:"Students",selectedAny:({count:e})=>`${e} selected`,selectedRange:({count:e,min:t,max:s})=>`${e} selected \xB7 choose ${t}\u2013${s}`,seat:"Seat",seats:"Seats",seatHint:"Click a seat on the plan.",seatsHint:"Click seats on the plan to select or unselect them.",noSeats:"No seats selected yet.",seatsChosen:({seats:e})=>`Selected: ${e}`,rows:{front:"Within the first \u2026 rows",back:"Within the last \u2026 rows"},rowsOf:({count:e})=>`of ${L(e,"row","rows")} with seats`,strength:"How strict?",importance:"Importance",preview:"This rule says",previewEmpty:"Choose students to see the rule.",create:"Add rule",needStudent:"Choose a student.",needStudents:({min:e,max:t})=>t>=40?`Choose at least ${e} ${e===1?"student":"students"}.`:`Choose ${e} to ${t} students.`,needSeat:"Choose a seat on the plan.",needSeats:"Choose at least one seat on the plan."}},issues:{apart:({names:e})=>`${e} are sitting next to each other.`,together:({names:e})=>`${e} aren\u2019t sitting together.`,fixed:({names:e,target:t})=>`${e} isn\u2019t in their fixed seat${t?` (${t})`:""}.`,preferred:({names:e,target:t})=>`${e} isn\u2019t in their preferred seat${t?` (${t})`:""}.`,front:({names:e,count:t,rows:s})=>`${e} ${tt(t)} not in ${st(s)}.`,back:({names:e,count:t,rows:s})=>`${e} ${tt(t)} not in ${nt(s)}.`,avoid:({names:e,count:t,seats:s})=>`${e} ${tt(t)} in an avoided seat${s?` (${s})`:""}.`,"seat-missing":({names:e})=>`${e} is assigned to a seat that no longer exists.`,"seat-disabled":({names:e,seats:t})=>`${e} is in a seat that\u2019s marked unavailable (${t}).`,"seat-shared":({names:e,seats:t})=>`${e} are assigned to the same seat (${t}).`,unseated:({names:e})=>`${e} has no seat.`,"excluded-seated":({names:e})=>`${e} is left out of the arrangement but still has a seat.`},explain:{noStudentsTitle:"Add students first",noStudents:"There\u2019s no one to seat yet. Add students, or include students you left out, and try again.",seatsTitle:"Not enough seats",seats:({students:e,seats:t,missing:s})=>`There are ${e} students in this arrangement but only ${L(t,"usable seat","usable seats")}. Add ${L(s,"more seat","more seats")}, turn unavailable seats back on, or leave some students out.`,seatsFix:"Tip: the checkbox next to a student\u2019s name leaves them out of this arrangement without deleting them.",noSeatTitle:({name:e})=>`No seat works for ${e}`,seatDisabled:"is marked unavailable",seatRemoved:"no longer exists",fixedUnavailable:({name:e,seat:t,why:s})=>`${e}\u2019s fixed seat ${t} ${s}, so the rule can\u2019t be followed. Choose another seat for the rule, or make the seat available again in Edit layout.`,noSeat:({name:e,count:t})=>t===1?`This rule rules out every available seat for ${e}:`:`Together, these rules rule out every available seat for ${e}:`,crowdedTitle:"Some students are short of seats",crowded:({names:e,count:t,seats:s})=>`${e} can only use ${L(t,"seat","seats")} between them (${s}) because of the rules below. Give some of them more seat options.`,conflictTitle:"Unable to find a valid arrangement",conflictOne:"This rule can\u2019t be followed with the current classroom layout:",conflict:({count:e})=>`No arrangement follows all ${e} of these rules at once. Each one is part of the conflict, so changing any of them may solve it:`,rulesFix:"Making a rule a preference lets ClassShuffle skip it only when it has to.",limitTitle:"ClassShuffle couldn\u2019t find a seating plan",limit:"The rules are very tight, and the search stopped before it found an arrangement or proved that none exists. Try again, or relax a rule.",limitRules:"These rules caused the most dead ends:",internalTitle:"Something went wrong",internal:"The arrangement didn\u2019t pass the final check, so it wasn\u2019t used. Please try again."},layout:{edit:"Edit layout",editing:"Editing layout",seatCount:({count:e})=>L(e,"usable seat","usable seats"),hint:"Click an empty spot to add a seat. Click a seat to rename it, mark it unavailable or remove it. Drag seats to move them; seats side by side form a desk.",rows:"Rows",columns:"Columns",fewer:({what:e})=>`Fewer ${e.toLowerCase()}`,more:({what:e})=>`More ${e.toLowerCase()}`,addSeatAt:({row:e,col:t})=>`Add a seat at row ${e}, column ${t}`,quick:"Quick setup",neighbors:"\u201CNext to\u201D rules",seatPanel:"Selected seat",moveHint:"Click an empty spot to move this seat there, or drag it.",labelField:"Seat name",labelPlaceholder:({auto:e})=>`Name (default ${e})`,rename:"Rename",disable:"Mark unavailable",enable:"Make available",remove:"Remove seat",removeTitle:"Remove this seat?",shrinkTitle:({count:e})=>`Remove ${L(e,"seat","seats")}?`,removeSeated:({count:e})=>`${L(e,"student","students")} will lose their seat.`,removeRules:({count:e})=>`${L(e,"rule uses","rules use")} these seats and will be updated.`,removeConfirm:({count:e})=>`Remove ${L(e,"seat","seats")}`,rulesDropped:({count:e})=>`${L(e,"rule was","rules were")} removed because ${e===1?"it":"they"} no longer had any seat.`,disabledUnseated:({name:e})=>`${e} no longer has a seat.`,form:{rows:"Rows",desks:"Desks per row",seatsPerDesk:"Seats per desk",aisles:"Aisle between desks",preview:({count:e})=>`${L(e,"seat","seats")} in total`},quickTitle:"Quick setup",quickSubtitle:"Lay out rows of desks. Seats that stay in place keep their students and rules.",quickApply:"Apply layout",quickConfirm:({count:e})=>`This layout removes ${L(e,"seat","seats")}`,neighborsTitle:"What counts as \u201Cnext to\u201D",neighborsSubtitle:"Used by Keep apart and Keep together rules.",neighborsAlways:"Seats side by side in the same row always count, unless an aisle or gap separates them.",frontBack:"Seats directly in front or behind",frontBackHint:"Students one behind the other also count as next to each other.",diagonal:"Diagonal seats",diagonalHint:"Seats touching corner to corner also count.",neighborsNote:"Unavailable seats never count as neighbours."},saved:{current:"Current arrangement",generatedAt:({date:e})=>`Generated ${e}`,manual:"Arranged by hand or opened from a saved arrangement",noPlan:"Generate a seating plan to save it here.",nameLabel:"Name for this arrangement",namePlaceholder:"e.g. Week 3, group work\u2026",save:"Save",defaultName:({date:e})=>`Arrangement of ${e}`,savedToast:({name:e})=>`\u201C${e}\u201D saved.`,title:"Saved arrangements",empty:"Save arrangements you like to switch back to them later.",open:"Open",openConfirmTitle:({name:e})=>`Open \u201C${e}\u201D?`,openConfirmBody:"It replaces the current arrangement. Save the current one first if you want to keep it.",opened:({name:e})=>`\u201C${e}\u201D opened.`,delete:({name:e})=>`Delete ${e}`,deleteConfirm:({name:e})=>`Delete \u201C${e}\u201D?`},export:{title:"Print and export",print:"Print",printLong:"Print seating chart",csv:"CSV",csvLong:"Download as spreadsheet (CSV)",backup:"Download classroom backup",csvSeat:"Seat",csvRow:"Row",csvStudent:"Student",csvNotes:"Notes",printDate:({date:e})=>`Seating plan \xB7 ${e}`,roster:"Students and seats"}};var at={en:ns},ot="en",rt=ot,os=()=>at[rt].locale,as=(e,t)=>t.split(".").reduce((s,n)=>s?.[n],e);function a(e,t={}){let s=as(at[rt],e);return s==null&&rt!==ot&&(s=as(at[ot],e)),s==null?(console.warn("[i18n] missing key",e),e):typeof s=="function"?s(t):typeof s!="string"?e:s.replace(/\{(\w+)\}/g,(n,o)=>t[o]??"")}function je(e){let t=a("common.and");return e.length<=1?e.join(""):`${e.slice(0,-1).join(", ")} ${t} ${e.at(-1)}`}var me=e=>new Date(e).toLocaleString(os(),{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}),rs=e=>new Date(e).toLocaleDateString(os(),{year:"numeric",month:"long",day:"numeric"});var ae={click:{},submit:{},change:{},input:{}},P=e=>Object.assign(ae.click,e),z=e=>Object.assign(ae.submit,e),oe=e=>Object.assign(ae.change,e),fe=e=>Object.assign(ae.input,e),is=0,it=()=>is=Date.now()+350;function ds(){document.addEventListener("click",e=>{let t=e.target.closest("[data-action]"),s=t&&ae.click[t.dataset.action];if(!(!s||t.disabled)){if(Date.now()<is){e.preventDefault();return}e.preventDefault(),s(t,e)}}),document.addEventListener("submit",e=>{let t=e.target.closest("form[data-form]"),s=t&&ae.submit[t.dataset.form];s&&(e.preventDefault(),s(new FormData(t),t,e))});for(let e of["change","input"])document.addEventListener(e,t=>{let s=t.target.closest(`[data-${e}]`),n=s&&ae[e][s.dataset[e]];n&&n(s,t)})}var ls=new WeakMap;function J(e,t){if(!e||ls.get(e)===t)return;ls.set(e,t);let s=document.activeElement,n=s&&e.contains(s)?kn(s):null,o=n&&"selectionStart"in s?[s.selectionStart,s.selectionEnd]:null;if(e.innerHTML=t,!n)return;let l=e.querySelector(n);if(l&&(l.focus({preventScroll:!0}),o))try{l.setSelectionRange(...o)}catch{}}function kn(e){if(e.id)return`#${CSS.escape(e.id)}`;for(let t of["data-focus","data-seat","data-cell","data-id"]){let s=e.getAttribute(t);if(s!=null){let n=e.dataset.action?`[data-action="${CSS.escape(e.dataset.action)}"]`:"";return`[${t}="${CSS.escape(s)}"]${n}`}}return null}var he=()=>document.getElementById("dialog"),Pe=null,lt=null;function q(e,{onClose:t,wide:s=!1}={}){let n=he();n.open&&us(),Pe=document.activeElement,lt=t??null,n.className=`dialog${s?" dialog-wide":""}`,n.innerHTML=e,n.showModal(),n.querySelector("[autofocus], input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select, .btn-primary")?.focus()}function dt(e){let t=he();t.innerHTML=e,t.querySelector("[autofocus], input:not([type=hidden]):not([type=checkbox]):not([type=radio]), textarea, select, .btn-primary")?.focus()}var cs=()=>he(),Be=()=>he().open;function us(){let e=he(),t=lt;lt=null,e.open&&e.close(),e.innerHTML="",t?.()}function O(){us(),Pe?.isConnected&&Pe.focus(),Pe=null}function ps(){let e=he();e.addEventListener("cancel",t=>{t.preventDefault(),O()}),e.addEventListener("mousedown",t=>{t.target===e&&O()})}var W=(e,t="")=>`
+  <header class="dialog-head">
+    <div>
+      <h2 class="dialog-title">${e}</h2>
+      ${t?`<p class="dialog-subtitle">${t}</p>`:""}
+    </div>
+    <button type="button" class="icon-btn" data-action="close-dialog" aria-label="${r(a("common.close"))}">${f("x")}</button>
+  </header>`;function Z({title:e,body:t="",confirm:s,danger:n=!0}){return new Promise(o=>{let l=!1;q(`<form data-form="confirm-dialog" class="dialog-form" role="alertdialog" aria-labelledby="confirm-title">
+        <header class="dialog-head"><h2 class="dialog-title" id="confirm-title">${e}</h2></header>
+        ${t?`<div class="dialog-text">${t}</div>`:""}
+        <footer class="dialog-foot">
+          <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+          <button type="submit" class="btn ${n?"btn-danger":"btn-primary"}" autofocus>${r(s)}</button>
+        </footer>
+      </form>`,{onClose:()=>o(l)}),ms=()=>{l=!0,O()}})}var ms=null;z({"confirm-dialog":()=>ms?.()});P({"close-dialog":()=>O()});function M(e,{kind:t="info",action:s}={}){let n=document.getElementById("toasts"),o=document.createElement("div");if(o.className=`toast toast-${t}`,o.innerHTML=`${f(t==="error"||t==="warn"?"alert":t==="success"?"check":"info")}
+    <span class="toast-text">${r(e)}</span>`,s){let l=document.createElement("button");l.type="button",l.className="toast-action",l.textContent=s.label,l.addEventListener("click",()=>{s.run(),o.remove()}),o.append(l)}for(n.append(o);n.children.length>3;)n.firstElementChild.remove();setTimeout(()=>o.classList.add("toast-out"),s?7e3:4500),setTimeout(()=>o.remove(),s?7400:4900)}var Sn=6;function fs(e){let t=null,s=null,n=null,o=i=>{n!==i&&(n?.classList.remove("is-drop-target"),n=i,n?.classList.add("is-drop-target"))},l=()=>{s?.remove(),s=null,o(null),t?.el.classList.remove("is-dragging"),document.body.classList.remove("is-dragging-any"),t=null};document.addEventListener("pointerdown",i=>{if(i.button!==0)return;let d=i.target.closest("[data-drag]");d&&(t={el:d,kind:d.dataset.drag,id:d.dataset.id,x:i.clientX,y:i.clientY,pointerId:i.pointerId})}),document.addEventListener("pointermove",i=>{if(!t||i.pointerId!==t.pointerId)return;if(!s){if(Math.hypot(i.clientX-t.x,i.clientY-t.y)<Sn)return;s=document.createElement("div"),s.className="drag-ghost",s.textContent=t.el.querySelector(".seat-name, .chip-name, .seat-label")?.textContent??"",document.body.append(s),t.el.classList.add("is-dragging"),document.body.classList.add("is-dragging-any")}i.preventDefault(),s.style.transform=`translate(${i.clientX+12}px, ${i.clientY+12}px)`;let d=document.elementFromPoint(i.clientX,i.clientY)?.closest("[data-drop]");o(d&&d!==t.el?d:null)}),document.addEventListener("pointerup",i=>{if(!t||i.pointerId!==t.pointerId)return;let d=!!s,u={kind:t.kind,id:t.id},b=n;l(),d&&(it(),b&&e(u,b))}),document.addEventListener("pointercancel",l),document.addEventListener("keydown",i=>{i.key==="Escape"&&s&&(it(),l())})}function re(e,{mode:t,selection:s=null,picked:n=new Set,highlight:o=new Set,compact:l=!1}){let{doc:i,topo:d}=e,{rows:u,cols:b}=i.layout,m=new Map(i.seats.map(S=>[`${S.row},${S.col}`,S])),$=s?.seatId??(s?.studentId?e.seatOf.get(s.studentId):null),k=t==="plan"&&$?d.neighbors($):new Set,p=new Set(i.seats.map(S=>S.col)),h=Array.from({length:b},(S,C)=>p.has(C)?"var(--seat-col)":"var(--aisle-col)").join(" "),y="";for(let S=0;S<u;S++)for(let C=0;C<b;C++){let F=m.get(`${S},${C}`),Y=F?`${m.has(`${S},${C-1}`)?" join-l":""}${m.has(`${S},${C+1}`)?" join-r":""}`:"",g={v:e,seat:F,row:S,col:C,join:Y,selection:s,selectedSeat:$,neighbors:k,picked:n,highlight:o};y+=F?In(t,g):xn(t,g)}return`
+    <div class="room${l?" room-compact":""} room-${t}">
+      <div class="room-front" aria-hidden="true"><span class="board">${r(a("chart.board"))}</span></div>
+      <div class="grid" style="grid-template-columns:${h}" role="group" aria-label="${r(a("chart.label",{rows:u,cols:b}))}">
+        ${y}
+      </div>
+      <div class="room-back" aria-hidden="true">${r(a("chart.back"))}</div>
+    </div>`}function xn(e,{row:t,col:s}){return e!=="layout"?'<div class="cell"></div>':`<button type="button" class="cell cell-add" data-action="layout-cell" data-cell="${t},${s}" data-drop="cell"
+    aria-label="${r(a("layout.addSeatAt",{row:t+1,col:s+1}))}">${f("plus")}</button>`}function In(e,t){let{v:s,seat:n,join:o,selectedSeat:l}=t,i=s.seatLabel(n.id),d=`<span class="seat-label">${r(i)}</span>`;if(e==="pick"){if(!n.enabled)return`<div class="seat seat-off${o}" title="${r(a("chart.unavailable"))}">${d}</div>`;let y=t.picked.has(n.id),S=s.occupant.get(n.id);return`<button type="button" class="seat seat-pick${y?" is-picked":""}${o}" data-action="pick-seat" data-seat="${n.id}"
+      aria-pressed="${y}" aria-label="${r(a("chart.seat",{label:i}))}">${d}
+      ${S?`<span class="seat-name seat-name-sm">${r(s.studentLabel(S))}</span>`:""}
+      ${y?f("check","icon seat-flag"):""}</button>`}if(e==="layout"){let y=l===n.id,S=s.occupant.get(n.id);return`<button type="button" class="seat seat-layout${n.enabled?"":" seat-off"}${y?" is-selected":""}${o}"
+      data-action="layout-seat" data-seat="${n.id}" data-drag="seat" data-id="${n.id}" data-drop="seat" aria-pressed="${y}"
+      aria-label="${r(a(n.enabled?"chart.seat":"chart.seatOff",{label:i}))}">
+      ${d}
+      ${n.enabled?S?`<span class="seat-name seat-name-sm">${r(s.studentLabel(S))}</span>`:"":`<span class="seat-empty">${r(a("chart.unavailable"))}</span>`}
+    </button>`}if(!n.enabled)return`<div class="seat seat-off${o}" role="img" aria-label="${r(a("chart.seatOff",{label:i}))}">${d}
+      <span class="seat-empty">${r(a("chart.unavailable"))}</span></div>`;let u=s.occupant.get(n.id),b=u?s.studentLabel(u):"",m=[u?"is-occupied":"is-empty",l===n.id?"is-selected":"",t.neighbors.has(n.id)?"is-neighbor":"",s.brokenSeats.has(n.id)||u&&s.brokenStudents.has(u)?"is-invalid":"",u&&s.unmetStudents.has(u)?"is-warn":"",t.highlight.has(n.id)?"is-highlight":""].filter(Boolean).join(" "),k=`${u&&s.fixedSeat.get(u)===n.id?f("lock","icon seat-flag"):""}${m.includes("is-invalid")?f("alert","icon seat-flag seat-flag-bad"):m.includes("is-warn")?f("alert","icon seat-flag seat-flag-warn"):""}`,p=`${d}${u?`<span class="seat-name">${r(b)}</span>`:`<span class="seat-empty">${r(a("chart.empty"))}</span>`}${k}`;if(e==="print")return`<div class="seat ${m}${o}">${p}</div>`;let h=u?a("chart.seatWith",{label:i,name:b})+(m.includes("is-invalid")?`. ${a("chart.breaksRule")}`:""):a("chart.seatEmpty",{label:i});return`<button type="button" class="seat ${m}${o}" data-action="seat" data-seat="${n.id}" data-drop="seat"
+    ${u?`data-drag="student" data-id="${u}"`:""} aria-pressed="${l===n.id}" aria-label="${r(h)}" title="${r(b||i)}">${p}</button>`}function hs(){return globalThis.crypto?.getRandomValues?globalThis.crypto.getRandomValues(new Uint32Array(1))[0]:Math.floor(Math.random()*2**32)}function Fe(e){let t=e>>>0,s=()=>{t=t+1831565813>>>0;let n=t;return n=Math.imul(n^n>>>15,n|1),n^=n+Math.imul(n^n>>>7,n|61),((n^n>>>14)>>>0)/4294967296};return{next:s,pick:n=>n[Math.floor(s()*n.length)],shuffle(n){let o=[...n];for(let l=o.length-1;l>0;l--){let i=Math.floor(s()*(l+1));[o[l],o[i]]=[o[i],o[l]]}return o}}}var Ln=Object.freeze({maxNodes:5e4,attempts:3,improveSteps:0,explainNodes:1e4}),Tn=.1;function Ue(e,t={}){let s={...Ln,...t},n=t.seed??hs(),o=Fe(n),l=Date.now(),i={nodes:0,attempts:0,ms:0},d=g=>({seed:n,...g,stats:{...i,ms:Date.now()-l}}),u=Cn(e),b=$s(u);if(b)return d({ok:!1,problem:b});let m=()=>d({ok:!1,problem:{kind:"conflict",ruleIds:gs(u,s)??u.hard.map(g=>g.id)}});if(!ks(u))return m();let $=e.previous&&Object.keys(e.previous).length?new Map(Object.entries(e.previous)):null,k=new Map,p=null,h=!1,y=!1;for(let g=0;g<s.attempts;g++){i.attempts++;let R=ct(u,o,s.maxNodes,$,k);if(i.nodes+=R.nodes,R.status==="limit")continue;if(R.status==="exhausted"){y=!0,h=R.rejectedPrevious;break}let G=An(u,R.assignment,o,$,s.improveSteps);if((!p||ws(G,p))&&(p=G),p.penalty===0&&p.variation===0)break}let S=$?"different":"new";if(!p&&h&&(p={assignment:new Map(u.studentIds.map(g=>[g,$.get(g)])),penalty:0,variation:0},S="only-one"),!p&&y)return m();if(!p){let g=gs(u,s);return d({ok:!1,problem:g?{kind:"conflict",ruleIds:g}:{kind:"limit",ruleIds:Dn(k)}})}let C=Object.fromEntries(p.assignment),F=te(e,C,u.topo);if(!F.valid)return d({ok:!1,problem:{kind:"internal",issues:F.hard}});let Y=F.soft.reduce((g,R)=>g+(R.penalty??1),0);return d({ok:!0,assignments:C,uniqueness:S,unmet:F.soft,penalty:Y})}function Cn({seats:e,students:t,rules:s,adjacency:n}){let o=ue(e,n),l=t.filter(d=>d.included!==!1).map(d=>d.id),i=Re(s,new Set(l));return bs(o,l,i.filter(d=>d.strength===_),i.filter(d=>d.strength===X))}function bs(e,t,s,n){let o=new Map(t.map(u=>[u,new Set(e.usableIds)])),l=new Map(t.map(u=>[u,[]])),i=new Map(t.map(u=>[u,[]])),d=new Map(t.map(u=>[u,[]]));for(let u of s){let b=D[u.type];if(b.allowedSeats){let m=b.allowedSeats(u,e);for(let $ of u.studentIds){let k=o.get($);for(let p of[...k])m.has(p)||k.delete(p);l.get($).push(u)}}else for(let m of u.studentIds)i.get(m).push(u)}for(let u of n)for(let b of u.studentIds)d.get(b).push(u);return{topo:e,studentIds:t,hard:s,soft:n,domains:o,restrictedBy:l,hardOf:i,softOf:d}}function $s(e){let{topo:t,studentIds:s,domains:n,restrictedBy:o}=e;if(!s.length)return{kind:"no-students"};if(s.length>t.usableIds.length)return{kind:"not-enough-seats",students:s.length,seats:t.usableIds.length};for(let l of s)if(n.get(l).size===0)return{kind:"no-seat",studentId:l,ruleIds:Mn(o.get(l),t)};return ys(e)}function Mn(e,t){let s=o=>t.usableIds.every(l=>o.some(i=>!D[i.type].allowedSeats(i,t).has(l))),n=[...e];for(let o of e){let l=n.filter(i=>i!==o);s(l)&&(n=l)}return n.map(o=>o.id)}function ys({studentIds:e,domains:t,restrictedBy:s}){let n=new Map,o=(l,i)=>{for(let d of t.get(l)){if(i.has(d))continue;i.add(d);let u=n.get(d);if(!u||o(u,i))return n.set(d,l),!0}return!1};for(let l of e){if(o(l,new Set))continue;let i=new Set([l]),d=new Set,u=[l];for(;u.length;)for(let m of t.get(u.shift())){if(d.has(m))continue;d.add(m);let $=n.get(m);$&&!i.has($)&&(i.add($),u.push($))}let b=[...new Set([...i].flatMap(m=>s.get(m).map($=>$.id)))];return{kind:"crowded",studentIds:[...i],seatIds:[...d],ruleIds:b}}return null}function vs(e,t){for(let[s,n]of e)if(t.get(s)!==n)return!1;return!0}function ct(e,t,s,n,o){let{topo:l,studentIds:i,domains:d,hardOf:u}=e,b=new Map(t.shuffle(i).map((w,T)=>[w,T])),m=new Map(i.map(w=>[w,new Set(d.get(w))])),$=new Map,k={topo:l,seatOf:w=>$.get(w)},p=[],h=0,y=!1,S=!1,C=w=>o.set(w.id,(o.get(w.id)??0)+1),F=(w,T)=>{m.get(w).delete(T),p.push(w,T)};function Y(w,T){for(let I of i)if(!($.has(I)||!m.get(I).has(T))&&(F(I,T),m.get(I).size===0))return!1;for(let I of u.get(w)){let B=D[I.type];if(B.compatible){for(let N of I.studentIds)if(!(N===w||$.has(N))){for(let H of[...m.get(N)])B.compatible(I,T,H,l)||F(N,H);if(m.get(N).size===0)return C(I),!1}}if(I.studentIds.every(N=>$.has(N))&&!B.evaluate(I,k).ok)return C(I),!1}return!0}function g(){let w=null,T=1/0,I=-1;for(let B of i){if($.has(B))continue;let N=m.get(B).size,H=u.get(B).length;(N<T||N===T&&(H>I||H===I&&b.get(B)<b.get(w)))&&(w=B,T=N,I=H)}return w}function R(w){if(w===i.length)return n&&vs($,n)?(S=!0,!1):!0;if(++h>s)return y=!0,!1;let T=g();for(let I of t.shuffle([...m.get(T)])){let B=p.length;if($.set(T,I),Y(T,I)&&R(w+1))return!0;for($.delete(T);p.length>B;){let N=p.pop();m.get(p.pop()).add(N)}if(y)return!1}return!1}let G=R(0);return{status:G?"found":y?"limit":"exhausted",assignment:G?new Map($):null,nodes:h,rejectedPrevious:S}}var ws=(e,t)=>e.penalty<t.penalty||e.penalty===t.penalty&&e.variation<t.variation;function An(e,t,s,n,o){let{topo:l,studentIds:i,domains:d,hardOf:u,softOf:b,soft:m}=e,$=new Map(t),k=new Map([...$].map(([w,T])=>[T,w])),p={topo:l,seatOf:w=>$.get(w)},h=w=>w.reduce((T,I)=>T+Wt(I)*D[I.type].evaluate(I,p).penalty,0),y=w=>n&&n.get(w)===$.get(w)?1:0,S=h(m),C=i.reduce((w,T)=>w+y(T),0),F=()=>({assignment:new Map($),penalty:S,variation:C}),Y=F();if(!m.length&&!n)return Y;let g=new Map(i.map(w=>[w,[...d.get(w)]])),R=o||Math.min(2e4,200*i.length),G=(w,T)=>{$.set(w,T),k.set(T,w)};for(let w=0;w<R;w++){let T=.6*(1-w/R)+.01,I=s.pick(i),B=$.get(I),N=s.pick(g.get(I));if(N===B)continue;let H=k.get(N);if(H&&!d.get(H).has(B))continue;let Lt=H?[...new Set([...b.get(I),...b.get(H)])]:b.get(I),fn=H?[...new Set([...u.get(I),...u.get(H)])]:u.get(I),Tt=h(Lt),Ct=y(I)+(H?y(H):0),Mt=()=>{G(I,B),H?G(H,N):k.delete(N)};if(G(I,N),H?G(H,B):k.delete(B),!fn.every(Et=>D[Et.type].evaluate(Et,p).ok)){Mt();continue}let At=h(Lt),Rt=y(I)+(H?y(H):0),Dt=At-Tt+Tn*(Rt-Ct);if(Dt>0&&s.next()>=Math.exp(-Dt/T)){Mt();continue}S+=At-Tt,C+=Rt-Ct,ws({penalty:S,variation:C},Y)&&!(n&&vs($,n))&&(Y=F())}return Y}function ks(e){let{topo:t,hard:s,domains:n}=e,o=Fe(1);for(let l of s){if(D[l.type].allowedSeats)continue;let i=l.studentIds;if(i.reduce((u,b)=>u+n.get(b).size,0)>600)continue;let d=new Map(i.map(u=>[u,[l]]));for(let u of i){let b=n.get(u);for(let m of[...b]){let $={topo:t,studentIds:i,hardOf:d,domains:new Map(i.map(k=>[k,k===u?new Set([m]):n.get(k)]))};ct($,o,200,null,new Map).status==="exhausted"&&b.delete(m)}if(b.size===0)return!1}}return!ys(e)}function Rn(e,t){return $s(e)||!ks(e)?!0:ct(e,Fe(1),t,null,new Map).status==="exhausted"}function gs(e,t){let s=(i,d)=>{let u=new Set(i.flatMap(m=>m.studentIds)),b=d?e.studentIds:e.studentIds.filter(m=>u.has(m));return bs(e.topo,b,i,[])},n=(i,d)=>Rn(s(i,d),t.explainNodes),o=!1;if(!n(e.hard,!1)){if(!n(e.hard,!0))return null;o=!0}let l=e.hard;for(let i of e.hard){let d=l.filter(u=>u!==i);n(d,o)&&(l=d)}return l.map(i=>i.id)}function Dn(e){return[...e].sort((t,s)=>s[1]-t[1]).slice(0,3).map(([t])=>t)}function Ss(e,t,s){let n={...e},o=n[t],l=Object.keys(n).find(d=>n[d]===s&&d!==t)??null;n[t]=s;let i=null;return l&&(o?n[l]=o:(delete n[l],i=l)),{assignments:n,displaced:i}}function xs(){return{id:j(),createdAt:new Date().toISOString(),assignments:{},generated:null,edited:!0}}function Is(e){let t=e.rules.length;return e.rules=e.rules.filter(s=>{let n=D[s.type];return n?s.studentIds.length<n.students.min?!1:!n.seats||s.seatIds.length>=n.seats.min:!0}),t-e.rules.length}function ut(e,t){let s=new Set(t);e.students=e.students.filter(o=>!s.has(o.id));for(let o of e.rules)o.studentIds=o.studentIds.filter(l=>!s.has(l));let n=o=>{for(let l of s)delete o[l]};e.plan&&(n(e.plan.assignments),e.plan.generated&&n(e.plan.generated.assignments));for(let o of e.saved)n(o.assignments);return Is(e)}function Ls(e,t){let s=new Set(t),n=Object.values(e.plan?.assignments??{}).filter(l=>s.has(l)).length,o=e.rules.filter(l=>l.seatIds.some(i=>s.has(i))).length;return{seated:n,rules:o}}function qe(e,t){let s=new Set(t);e.seats=e.seats.filter(o=>!s.has(o.id));for(let o of e.rules)o.seatIds=o.seatIds.filter(l=>!s.has(l));let n=o=>{for(let[l,i]of Object.entries(o))s.has(i)&&delete o[l]};e.plan&&(n(e.plan.assignments),e.plan.generated&&n(e.plan.generated.assignments));for(let o of e.saved)n(o.assignments);return Is(e)}function pt(e,t,s){let n=e.students.find(o=>o.id===t);n&&(n.included=s,!s&&e.plan&&delete e.plan.assignments[t])}function Ts(e,t,s){let n=e.seats.find(o=>o.id===t);if(n&&(n.enabled=s,!s&&e.plan))for(let[o,l]of Object.entries(e.plan.assignments))l===t&&delete e.plan.assignments[o]}var mt=(e,t,s)=>e.seats.filter(n=>n.row>=t||n.col>=s).map(n=>n.id);function Cs(e,t,s){let n=qe(e,mt(e,t,s));return e.layout={rows:t,cols:s},n}function Ms(e){let t=e.layout.rows-1,s=e.seats.filter(n=>n.row===t);e.layout.rows+=1;for(let n of s)e.seats.push({id:j(),row:t+1,col:n.col,enabled:!0,label:""})}function As(e,t){let s=be(t,j,e.seats),n=new Set(s.seats.map(l=>l.id)),o=qe(e,e.seats.filter(l=>!n.has(l.id)).map(l=>l.id));return e.seats=s.seats,e.layout={rows:s.rows,cols:s.cols},o}function Rs(e,t){let s=be(t,()=>"",e.seats),n=new Set(s.seats.map(o=>o.id));return e.seats.filter(o=>!n.has(o.id)).map(o=>o.id)}var ft=6,_e={ok:"check",broken:"alert",unmet:"info",off:"pause",na:"pause",none:"dot"},le=(e,t)=>je(e.map(s=>`<strong>${r(t.studentLabel(s))}</strong>`));function ie(e,t){let s=e.map(n=>`<strong>${r(t.seatLabel(n))}</strong>`);return s.length<=ft?je(s):je([...s.slice(0,ft-1),a("common.more",{count:s.length-ft+1})])}function de(e,t){let s=e.studentIds.filter(n=>t.student(n));return a(`rules.sentence.${e.type}.${e.strength}`,{names:s.length?le(s,t):a("rules.nobody"),seats:e.seatIds.length?ie(e.seatIds,t):a("rules.noSeats"),rows:e.params?.rows??2,count:e.seatIds.length})}function ht(e,t){let s=le(e.studentIds,t),n=e.seatIds.length?ie(e.seatIds,t):"";if(e.code!=="rule")return a(`issues.${e.code}`,{names:s,seats:n});let o=t.doc.rules.find(l=>l.id===e.ruleId);return a(`issues.${e.type}`,{names:s,seats:n,count:e.studentIds.length,target:o?.seatIds.length?ie(o.seatIds,t):"",rows:o?.params?.rows??2})}function Ds(e,t){let s="ruleIds"in e?e.ruleIds.filter(o=>t.doc.rules.some(l=>l.id===o)):[],n=(o,l)=>a(`explain.${o}`,l);switch(e.kind){case"no-students":return{title:n("noStudentsTitle"),paragraphs:[n("noStudents")],ruleIds:s};case"not-enough-seats":return{title:n("seatsTitle"),paragraphs:[n("seats",{students:e.students,seats:e.seats,missing:e.students-e.seats})],ruleIds:s};case"no-seat":{let o=le([e.studentId],t),l=s.map(d=>t.doc.rules.find(u=>u.id===d)),i=l.length===1&&l[0].type==="fixed"?l[0]:null;if(i){let d=i.seatIds[0],u=t.topo.seat(d)?n("seatDisabled"):n("seatRemoved");return{title:n("noSeatTitle",{name:o}),paragraphs:[n("fixedUnavailable",{name:o,seat:ie([d],t),why:u})],ruleIds:s}}return{title:n("noSeatTitle",{name:o}),paragraphs:[n("noSeat",{name:o,count:s.length})],ruleIds:s}}case"crowded":return{title:n("crowdedTitle"),paragraphs:[n("crowded",{names:le(e.studentIds,t),count:e.seatIds.length,seats:ie(e.seatIds,t)})],ruleIds:s};case"conflict":return{title:n("conflictTitle"),paragraphs:[n(s.length===1?"conflictOne":"conflict",{count:s.length})],ruleIds:s};case"limit":return{title:n("limitTitle"),paragraphs:[n("limit"),s.length?n("limitRules"):""].filter(Boolean),ruleIds:s};default:return{title:n("internalTitle"),paragraphs:[n("internal")],ruleIds:s}}}async function En(){let e=c.doc;if(!e||c.ui.generating)return;c.ui.generating=!0,c.ui.editingLayout=!1,c.ui.outcome=null,A(),await zt();let t;try{t=Ue({seats:e.seats,students:e.students,rules:e.rules,adjacency:e.adjacency,previous:e.plan?.assignments??null})}catch(n){console.error(n),t={ok:!1,problem:{kind:"internal",issues:[]}}}if(c.ui.generating=!1,!t.ok){c.ui.outcome={ok:!1,problem:t.problem},A();return}let s={seed:t.seed,generatedAt:new Date().toISOString(),uniqueness:t.uniqueness,attempts:t.stats.attempts,nodes:t.stats.nodes,ms:t.stats.ms};x(n=>{n.plan={id:j(),createdAt:s.generatedAt,assignments:t.assignments,generated:{assignments:t.assignments,info:s},edited:!1}}),c.ui.selection=null,c.ui.outcome={ok:!0,uniqueness:t.uniqueness,unmet:t.unmet.length,doc:c.doc},A()}function gt(e,t){let s=o=>`${o.code}|${o.ruleId??[...o.studentIds].sort().join()}`,n=new Map(e.map(o=>[s(o),o.penalty??1]));return t.filter(o=>!n.has(s(o))||(o.penalty??1)>n.get(s(o)))}var $t=()=>c.doc.plan?.assignments??{};function Hs(e,t,s){let n=c.doc,o=E(),l=o.validation??te(n,{},o.topo),i=te(n,e,o.topo);if(gt(l.hard,i.hard).length){ee={assignments:e,subtitle:t,revisions:{},after:s},bt();return}Os(e,{}),s?.();let u=gt(l.soft,i.soft);u.length&&M(a("move.softWarning",{count:u.length}),{kind:"warn"})}function Os(e,t){x(s=>{for(let[n,o]of Object.entries(t)){let l=s.rules.find(i=>i.id===n);l&&(o==="soft"?l.strength="soft":l.active=!1)}s.plan||(s.plan=xs()),s.plan.assignments=e,s.plan.edited=!0})}function xe(e,t){let s=E();if(s.seatOf.get(e)===t)return;let{assignments:n,displaced:o}=Ss($t(),e,t),l=a("move.subtitle",{name:le([e],s),seat:ie([t],s)});Hs(n,l,o?()=>M(a("move.displaced",{name:s.studentLabel(o)})):null)}function Hn(e){let t=E(),{[e]:s,...n}=$t();Hs(n,a("move.unseatSubtitle",{name:le([e],t)}))}var ee=null;function bt(){let e=c.doc,t=E(),s=e.rules.map(d=>{let u=ee.revisions[d.id];return u==="soft"?{...d,strength:"soft"}:u==="off"?{...d,active:!1}:d}),n={...e,rules:s},o=gt(te(n,$t(),t.topo).hard,te(n,ee.assignments,t.topo).hard);if(!o.length){let{assignments:d,revisions:u,after:b}=ee;ee=null,O(),Os(d,u),b?.(),M(a("move.appliedWithChange"),{kind:"success"});return}let l=o.map(d=>{let u=d.ruleId?e.rules.find(b=>b.id===d.ruleId):null;return`<li class="conflict-item">
+        <p class="conflict-reason">${f("alert","icon icon-bad")} <span>${ht(d,t)}</span></p>
+        ${u?`<p class="conflict-rule">${a("move.ruleIs")} ${de(u,t)}</p>
+               <div class="conflict-actions">
+                 ${Se(u)?`<button type="button" class="btn btn-secondary btn-sm" data-action="conflict-soften" data-id="${u.id}">${r(a("rules.makePreference"))}</button>`:""}
+                 <button type="button" class="btn btn-ghost btn-sm" data-action="conflict-off" data-id="${u.id}">${r(a("rules.turnOff"))}</button>
+               </div>`:""}
+      </li>`}).join(""),i=`
+    <div class="dialog-form" role="alertdialog" aria-labelledby="conflict-title">
+      ${W(`<span id="conflict-title">${r(a("move.title"))}</span>`,ee.subtitle)}
+      <div class="dialog-text"><p>${r(a("move.explain"))}</p><ul class="conflict-list">${l}</ul></div>
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn-primary" data-action="close-dialog" autofocus>${r(a("move.cancel"))}</button>
+      </footer>
+    </div>`;document.getElementById("conflict-title")?cs().innerHTML=i:q(i,{onClose:()=>ee=null})}P({"conflict-soften":e=>{ee&&(ee.revisions[e.dataset.id]="soft",bt())},"conflict-off":e=>{ee&&(ee.revisions[e.dataset.id]="off",bt())}});var se=e=>{c.ui.selection=e,A()};P({generate:()=>En(),seat:e=>{let t=e.dataset.seat,s=E(),n=c.ui.selection,o=s.occupant.get(t);if(n?.studentId){if(s.seatOf.get(n.studentId)===t)return se(null);let l=n.studentId;return se(null),xe(l,t)}if(n?.seatId&&n.seatId!==t&&o&&!s.occupant.get(n.seatId)){let l=n.seatId;return se(null),xe(o,l)}if(n?.seatId===t)return se(null);se(o?{studentId:o}:{seatId:t})},"select-student":e=>{let t=e.dataset.id,s=c.ui.selection,n=E();if(s?.seatId&&!n.occupant.get(s.seatId)&&e.closest(".tray")){let o=s.seatId;return se(null),xe(t,o)}se(s?.studentId===t?null:{studentId:t})},"clear-selection":()=>se(null),"unseat-student":e=>{se(null),Hn(e.dataset.id)},"reset-plan":()=>{x(e=>{e.plan.assignments={...e.plan.generated.assignments},e.plan.edited=!1}),M(a("plan.resetDone"),{action:{label:a("common.undo"),run:U}})},"dismiss-outcome":()=>{c.ui.outcome=null,A()}});function Ns(e){let t=e.doc.plan,s=e.validation?.hard.length??0,n=e.validation?.soft.length??0,o={none:["seat",a("plan.status.none")],ok:["check",a("plan.status.ok")],warnings:["alert",a("plan.status.warnings",{count:n})],incomplete:["info",a("plan.status.incomplete",{count:e.unseated.length})],broken:["alert",a("plan.status.broken",{count:s})]}[e.status],l=t?.generated&&t.edited;return`
+    <div class="plan-status status-${e.status}" role="status">
+      ${f(o[0])}<span>${r(o[1])}</span>
+      ${l?`<span class="tag">${r(a("plan.edited"))}</span>`:""}
+    </div>
+    <div class="stage-actions">
+      ${l?`<button type="button" class="btn btn-ghost btn-sm" data-action="reset-plan" title="${r(a("plan.resetHint"))}">${f("reset")}<span>${r(a("plan.reset"))}</span></button>`:""}
+      <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-layout">${f("grid")}<span>${r(a("layout.edit"))}</span></button>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="print" ${t?"":"disabled"}>${f("print")}<span>${r(a("export.print"))}</span></button>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="export-csv" ${t?"":"disabled"}>${f("download")}<span>${r(a("export.csv"))}</span></button>
+    </div>`}function js(e){let t="",s=c.ui.outcome;if(s&&!s.ok)t+=On(s.problem,e);else if(s?.ok&&s.doc===e.doc){let o=[a(s.uniqueness==="only-one"?"plan.onlyOne":"plan.generated")];s.unmet&&o.push(a("plan.unmetAfterGenerate",{count:s.unmet})),t+=`<div class="notice notice-${s.uniqueness==="only-one"?"info":"success"}" role="status">
+      ${f(s.uniqueness==="only-one"?"info":"check")}
+      <div class="notice-body"><p>${o.map(r).join(" ")}</p></div>
+      <button type="button" class="icon-btn" data-action="dismiss-outcome" aria-label="${r(a("common.dismiss"))}">${f("x")}</button>
+    </div>`}let n=[...(e.validation?.hard??[]).map(o=>["hard",o]),...(e.validation?.soft??[]).map(o=>["soft",o])];if(n.length){let o=e.validation.hard.length;t+=`<details class="issues"${o?" open":""}>
+      <summary>${f(o?"alert":"info")}<span>${r(o?a("plan.issuesHard",{count:o}):a("plan.issuesSoft",{count:n.length}))}</span></summary>
+      ${o?`<p class="issues-hint">${r(a("plan.issuesHardHint"))}</p>`:""}
+      <ul>${n.map(([l,i])=>`<li class="issue issue-${l}">${f(l==="hard"?"alert":"info")}<span>${ht(i,e)}</span></li>`).join("")}</ul>
+    </details>`}return t}function On(e,t){let{title:s,paragraphs:n,ruleIds:o}=Ds(e,t),l=o.map(d=>t.doc.rules.find(u=>u.id===d)).filter(Boolean),i=e.kind==="not-enough-seats"?a("explain.seatsFix"):l.length?a("explain.rulesFix"):"";return`<div class="notice notice-error" role="alert">
+    ${f("alert")}
+    <div class="notice-body">
+      <p class="notice-title">${s}</p>
+      ${n.map(d=>`<p>${d}</p>`).join("")}
+      ${l.length?`<ul class="notice-rules">${l.map(d=>`<li>
+                  <span class="rule-chip rule-${d.strength}">${r(a(`rules.strength.${d.strength}`))}</span>
+                  <span class="notice-rule-text">${de(d,t)}</span>
+                  <span class="notice-rule-actions">
+                    <button type="button" class="btn btn-link btn-sm" data-action="rule-edit" data-id="${d.id}">${r(a("common.edit"))}</button>
+                    ${d.strength==="hard"&&Se(d)?`<button type="button" class="btn btn-link btn-sm" data-action="rule-soften" data-id="${d.id}">${r(a("rules.makePreference"))}</button>`:""}
+                    ${d.active?`<button type="button" class="btn btn-link btn-sm" data-action="rule-toggle" data-id="${d.id}">${r(a("rules.turnOff"))}</button>`:""}
+                  </span>
+                </li>`).join("")}</ul>`:""}
+      ${i?`<p class="notice-hint">${r(i)}</p>`:""}
+    </div>
+    <button type="button" class="icon-btn" data-action="dismiss-outcome" aria-label="${r(a("common.dismiss"))}">${f("x")}</button>
+  </div>`}function Ps(e){if(!e.doc.plan||!e.unseated.length)return"";let t=c.ui.selection?.studentId;return`<div class="tray" aria-label="${r(a("plan.unseatedTitle",{count:e.unseated.length}))}">
+    <span class="tray-title">${r(a("plan.unseatedTitle",{count:e.unseated.length}))}</span>
+    <div class="chips">
+      ${e.unseated.map(s=>`<button type="button" class="chip${t===s.id?" is-selected":""}" data-action="select-student" data-drag="student" data-id="${s.id}" aria-pressed="${t===s.id}">
+            <span class="chip-name">${r(e.studentLabel(s.id))}</span></button>`).join("")}
+    </div>
+    <span class="tray-hint">${r(a("plan.unseatedHint"))}</span>
+  </div>`}function Es(e,t){let s=t.ruleStatus(e);return`<li class="rule-line rs-${s}">
+    ${f(_e[s])}
+    <span>${de(e,t)}</span>
+    <span class="sr-only">${r(a(`rules.status.${s}`))}</span>
+  </li>`}function Bs(e){let t=c.ui.selection;if(!t)return"";if(t.studentId){let o=e.student(t.studentId);if(!o)return"";let l=e.seatOf.get(o.id),i=e.studentLabel(o.id),d=o.included?l?a("inspector.seat",{seat:e.seatLabel(l)}):a("inspector.unseated"):a("inspector.excluded"),u=e.rulesOf(o.id);return`<section class="inspector" aria-label="${r(a("inspector.label"))}">
+      <div class="inspector-head">
+        <div><h3 class="inspector-title">${r(i)}</h3><p class="inspector-sub">${r(d)}</p></div>
+        <button type="button" class="icon-btn" data-action="clear-selection" aria-label="${r(a("common.close"))}">${f("x")}</button>
+      </div>
+      ${o.notes?`<p class="inspector-notes">${r(o.notes)}</p>`:""}
+      ${o.included&&e.doc.plan?`<p class="hint">${r(a("inspector.moveHint",{name:i}))}</p>`:""}
+      ${u.length?`<ul class="rule-lines">${u.map(b=>Es(b,e)).join("")}</ul>`:`<p class="muted">${r(a("inspector.noRules"))}</p>`}
+      <div class="inspector-actions">
+        <button type="button" class="btn btn-secondary btn-sm" data-action="rule-new" data-student="${o.id}">${f("plus")}<span>${r(a("inspector.addRule"))}</span></button>
+        ${l?`<button type="button" class="btn btn-ghost btn-sm" data-action="unseat-student" data-id="${o.id}">${r(a("inspector.unseat"))}</button>`:""}
+        <button type="button" class="btn btn-ghost btn-sm" data-action="toggle-included-btn" data-id="${o.id}">${r(a(o.included?"inspector.exclude":"inspector.include"))}</button>
+      </div>
+    </section>`}let s=t.seatId;if(!e.topo.seat(s))return"";let n=e.doc.rules.filter(o=>o.seatIds.includes(s));return`<section class="inspector" aria-label="${r(a("inspector.label"))}">
+    <div class="inspector-head">
+      <div><h3 class="inspector-title">${r(a("inspector.seatTitle",{seat:e.seatLabel(s)}))}</h3><p class="inspector-sub">${r(a("chart.empty"))}</p></div>
+      <button type="button" class="icon-btn" data-action="clear-selection" aria-label="${r(a("common.close"))}">${f("x")}</button>
+    </div>
+    <p class="hint">${r(a(e.doc.plan?"inspector.emptySeatHint":"inspector.noPlanHint"))}</p>
+    ${n.length?`<ul class="rule-lines">${n.map(o=>Es(o,e)).join("")}</ul>`:""}
+  </section>`}function Fs(e){let t=e.doc.plan,s=t?.generated?.info,n=[...e.doc.saved].sort((o,l)=>l.createdAt.localeCompare(o.createdAt));return`
+    <section class="panel-section">
+      <h3 class="section-title">${r(a("saved.current"))}</h3>
+      ${t?`<p class="muted">${r(s?a("saved.generatedAt",{date:me(s.generatedAt)}):a("saved.manual"))}${t.edited&&s?` \xB7 ${r(a("plan.edited"))}`:""}</p>
+             <form class="add-row" data-form="save-arrangement">
+               <label class="sr-only" for="arrangement-name">${r(a("saved.nameLabel"))}</label>
+               <input id="arrangement-name" name="name" maxlength="60" placeholder="${r(a("saved.namePlaceholder"))}" autocomplete="off">
+               <button type="submit" class="btn btn-secondary">${f("bookmark")}<span>${r(a("saved.save"))}</span></button>
+             </form>`:`<p class="muted">${r(a("saved.noPlan"))}</p>`}
+    </section>
+    <section class="panel-section">
+      <h3 class="section-title">${r(a("saved.title"))}</h3>
+      ${n.length?`<ul class="saved-list">${n.map(o=>`<li class="saved-row">
+                  <div><span class="saved-name">${r(o.name)}</span><span class="muted saved-date">${r(me(o.createdAt))}</span></div>
+                  <div class="row-buttons">
+                    <button type="button" class="btn btn-ghost btn-sm" data-action="open-arrangement" data-id="${o.id}">${r(a("saved.open"))}</button>
+                    <button type="button" class="icon-btn" data-action="delete-arrangement" data-id="${o.id}" aria-label="${r(a("saved.delete",{name:o.name}))}">${f("trash")}</button>
+                  </div>
+                </li>`).join("")}</ul>`:`<p class="empty-hint">${r(a("saved.empty"))}</p>`}
+    </section>
+    <section class="panel-section">
+      <h3 class="section-title">${r(a("export.title"))}</h3>
+      <div class="button-stack">
+        <button type="button" class="btn btn-secondary" data-action="print" ${t?"":"disabled"}>${f("print")}<span>${r(a("export.printLong"))}</span></button>
+        <button type="button" class="btn btn-secondary" data-action="export-csv" ${t?"":"disabled"}>${f("download")}<span>${r(a("export.csvLong"))}</span></button>
+        <button type="button" class="btn btn-secondary" data-action="export-backup">${f("save")}<span>${r(a("export.backup"))}</span></button>
+      </div>
+    </section>`}z({"save-arrangement":(e,t)=>{let s=String(e.get("name")??"").trim()||a("saved.defaultName",{date:me(new Date().toISOString())});x(n=>{n.saved.push({id:j(),name:s,createdAt:new Date().toISOString(),assignments:{...n.plan.assignments}})}),t.reset(),M(a("saved.savedToast",{name:s}),{kind:"success"})}});P({"open-arrangement":async e=>{let t=c.doc.saved.find(n=>n.id===e.dataset.id);!t||c.doc.plan&&!await Z({title:a("saved.openConfirmTitle",{name:r(t.name)}),body:`<p>${r(a("saved.openConfirmBody"))}</p>`,confirm:a("saved.open"),danger:!1})||(x(n=>{n.plan={id:j(),createdAt:new Date().toISOString(),assignments:{...t.assignments},generated:{assignments:{...t.assignments},info:null},edited:!1}}),c.ui.selection=null,M(a("saved.opened",{name:t.name}),{action:{label:a("common.undo"),run:U}}))},"delete-arrangement":async e=>{let t=c.doc.saved.find(s=>s.id===e.dataset.id);t&&await Z({title:a("saved.deleteConfirm",{name:r(t.name)}),confirm:a("common.delete")})&&x(s=>{s.saved=s.saved.filter(n=>n.id!==t.id)})}});function qs(e){let{doc:t}=e,s=t.students.length,n=e.includedCount>e.usableSeats,o=s>12,l=K(c.ui.studentQuery),i=t.students.filter(d=>!l||K(d.name).includes(l)).map(d=>Nn(d,e)).join("");return`
+    <form class="add-row" data-form="add-student">
+      <label class="sr-only" for="new-student">${r(a("students.nameLabel"))}</label>
+      <input id="new-student" name="name" maxlength="60" placeholder="${r(a("students.addPlaceholder"))}" autocomplete="off" required>
+      <button type="submit" class="btn btn-secondary">${f("plus")}<span>${r(a("common.add"))}</span></button>
+    </form>
+    <div class="panel-row">
+      <button type="button" class="btn btn-link" data-action="paste-students">${f("paste")}<span>${r(a("students.paste"))}</span></button>
+      ${s?`<button type="button" class="btn btn-link btn-link-danger" data-action="remove-all-students">${r(a("students.removeAll"))}</button>`:""}
+    </div>
+    <p class="counts${n?" counts-over":""}">
+      ${n?f("alert"):""}
+      ${r(a("students.counts",{total:s,included:e.includedCount,seats:e.usableSeats}))}
+      ${n?`<span class="counts-warn">${r(a("students.tooMany",{count:e.includedCount-e.usableSeats}))}</span>`:""}
+    </p>
+    ${o?`<div class="search-row">${f("search")}<label class="sr-only" for="student-filter">${r(a("students.filter"))}</label>
+           <input id="student-filter" type="search" placeholder="${r(a("students.filter"))}" value="${r(c.ui.studentQuery)}" data-input="filter-students" autocomplete="off"></div>`:""}
+    ${s?i?`<ul class="student-list">${i}</ul>`:`<p class="empty-hint">${r(a("students.noMatch"))}</p>`:`<div class="empty-state">${f("users","icon empty-icon")}<p>${r(a("students.empty"))}</p></div>`}`}function Nn(e,t){let s=t.studentLabel(e.id),n=t.seatOf.get(e.id),o=e.included?n?t.seatLabel(n):t.doc.plan?a("students.unseated"):"":a("students.excluded"),l=t.rulesOf(e.id).length,i=c.ui.selection?.studentId===e.id,d=t.brokenStudents.has(e.id);return`<li class="student-row${i?" is-selected":""}${e.included?"":" is-excluded"}">
+    <input type="checkbox" class="check" data-change="toggle-included" data-id="${e.id}" ${e.included?"checked":""}
+      aria-label="${r(a("students.includeLabel",{name:s}))}" title="${r(a("students.includeHint"))}">
+    <button type="button" class="student-name" data-action="select-student" data-id="${e.id}" aria-pressed="${i}">
+      <span class="student-text">${r(s)}</span>
+      ${t.duplicates.has(e.id)?`<span class="badge badge-warn" title="${r(a("students.duplicateHint"))}">${r(a("students.duplicate"))}</span>`:""}
+    </button>
+    <span class="student-meta">
+      ${l?`<span class="meta-rules" title="${r(a("students.rulesCount",{count:l}))}">${f("rules")}${l}</span>`:""}
+      ${o?`<span class="meta-seat${d?" is-bad":""}">${r(o)}</span>`:""}
+    </span>
+    <span class="row-buttons">
+      <button type="button" class="icon-btn" data-action="edit-student" data-id="${e.id}" aria-label="${r(a("students.edit",{name:s}))}">${f("pencil")}</button>
+      <button type="button" class="icon-btn" data-action="remove-student" data-id="${e.id}" aria-label="${r(a("students.remove",{name:s}))}">${f("trash")}</button>
+    </span>
+  </li>`}function Us(e){x(t=>{for(let s of e)t.students.push(Ce(s))})}var _s=()=>new Set(c.doc.students.map(e=>K(e.name)));z({"add-student":(e,t)=>{let s=String(e.get("name")??"").replace(/\s+/g," ").trim();if(!s)return;let n=c.doc.students.find(o=>K(o.name)===K(s));Us([s]),t.reset(),document.getElementById("new-student")?.focus(),n&&M(a("students.duplicateAdded",{name:n.name}),{kind:"warn"})},"paste-students":e=>{let t=e.get("skip")==="on",s=_s(),n=[],o=0;for(let l of Ke(String(e.get("names")??""))){let i=K(l);if(t&&s.has(i)){o++;continue}s.add(i),n.push(l)}if(O(),!n.length){M(a("students.pasteNothing"),{kind:"warn"});return}Us(n),M(a("students.pasteDone",{count:n.length,skipped:o}),{kind:"success",action:{label:a("common.undo"),run:U}})},"edit-student":e=>{let t=String(e.get("id")),s=String(e.get("name")??"").replace(/\s+/g," ").trim();s&&(x(n=>{let o=n.students.find(l=>l.id===t);if(!o)return!1;o.name=s,o.notes=String(e.get("notes")??"").trim()}),O())}});function Ws(){let e=document.getElementById("paste-names"),t=document.getElementById("paste-skip")?.checked,s=document.getElementById("paste-summary");if(!e||!s)return;let n=_s(),o=0,l=0,i=0,d=new Set;for(let b of Ke(e.value)){let m=K(b);n.has(m)?l++:d.has(m)?i++:o++,d.add(m)}let u=o+l+i;s.textContent=u?a("students.pastePreview",{total:u,adding:t?o:u,known:l,repeated:i}):a("students.pasteEmpty")}fe({"paste-preview":Ws,"filter-students":e=>{c.ui.studentQuery=e.value,A()}});oe({"paste-preview":Ws,"toggle-included":e=>{x(t=>pt(t,e.dataset.id,e.checked))}});P({"paste-students":()=>{q(`
+      <form class="dialog-form" data-form="paste-students">
+        ${W(r(a("students.pasteTitle")),r(a("students.pasteSubtitle")))}
+        <label class="sr-only" for="paste-names">${r(a("students.pasteLabel"))}</label>
+        <textarea id="paste-names" name="names" rows="10" class="textarea" data-input="paste-preview" placeholder="${r(a("students.pastePlaceholder"))}"></textarea>
+        <label class="check-label"><input type="checkbox" id="paste-skip" name="skip" class="check" checked data-change="paste-preview"> ${r(a("students.pasteSkip"))}</label>
+        <p class="muted" id="paste-summary" aria-live="polite">${r(a("students.pasteEmpty"))}</p>
+        <footer class="dialog-foot">
+          <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+          <button type="submit" class="btn btn-primary">${r(a("students.pasteSubmit"))}</button>
+        </footer>
+      </form>`)},"edit-student":e=>{let t=c.doc.students.find(s=>s.id===e.dataset.id);t&&q(`
+      <form class="dialog-form" data-form="edit-student">
+        ${W(r(a("students.editTitle")))}
+        <input type="hidden" name="id" value="${t.id}">
+        <label class="field"><span class="field-label">${r(a("students.nameLabel"))}</span>
+          <input class="input" name="name" value="${r(t.name)}" maxlength="60" required autocomplete="off"></label>
+        <label class="field"><span class="field-label">${r(a("students.notesLabel"))}</span>
+          <textarea class="textarea" name="notes" rows="3" maxlength="300" placeholder="${r(a("students.notesPlaceholder"))}">${r(t.notes)}</textarea></label>
+        <footer class="dialog-foot">
+          <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+          <button type="submit" class="btn btn-primary">${r(a("common.save"))}</button>
+        </footer>
+      </form>`)},"remove-student":e=>{let t=E(),s=e.dataset.id,n=t.studentLabel(s);c.ui.selection?.studentId===s&&(c.ui.selection=null);let o=0;x(i=>{o=ut(i,[s])});let l=o?a("students.removedWithRules",{name:n,count:o}):a("students.removed",{name:n});M(l,{action:{label:a("common.undo"),run:U}})},"remove-all-students":async()=>{let e=c.doc.students.length;await Z({title:r(a("students.removeAllTitle",{count:e})),body:`<p>${r(a("students.removeAllBody"))}</p>`,confirm:a("students.removeAllConfirm",{count:e})})&&(c.ui.selection=null,x(s=>{ut(s,s.students.map(n=>n.id))}),M(a("students.removedAll",{count:e}),{action:{label:a("common.undo"),run:U}}))},"toggle-included-btn":e=>{let t=c.doc.students.find(s=>s.id===e.dataset.id);t&&x(s=>pt(s,t.id,!t.included))}});var yt={apart:"unlink",together:"link",fixed:"lock",preferred:"star",front:"arrow-up",back:"arrow-down",avoid:"ban"};function zs(e){let t=e.doc.rules,s=o=>t.filter(l=>l.strength===o),n=o=>{let l=s(o);return l.length?`<section class="rule-group">
+      <h3 class="section-title">${r(a(`rules.group.${o}`))} <span class="muted">${l.length}</span></h3>
+      <p class="section-hint">${r(a(`rules.groupHint.${o}`))}</p>
+      <ul class="rule-list">${l.map(i=>jn(i,e)).join("")}</ul>
+    </section>`:""};return`
+    <button type="button" class="btn btn-secondary btn-block" data-action="rule-new" ${e.doc.students.length?"":"disabled"}>${f("plus")}<span>${r(a("rules.add"))}</span></button>
+    ${t.length?n("hard")+n("soft"):`<div class="empty-state">${f("rules","icon empty-icon")}<p>${r(a(e.doc.students.length?"rules.empty":"rules.emptyNoStudents"))}</p></div>`}`}function jn(e,t){let s=t.ruleStatus(e);return`<li class="rule-row rs-${s}${e.active?"":" is-off"}">
+    <span class="rule-icon">${f(yt[e.type]??"rules")}</span>
+    <div class="rule-body">
+      <p class="rule-text">${de(e,t)}</p>
+      <p class="rule-status">${f(_e[s])}<span>${r(a(`rules.status.${s}`))}</span>
+        ${e.strength==="soft"&&e.importance==="high"?`<span class="tag">${r(a("rules.importance.high"))}</span>`:""}</p>
+    </div>
+    <div class="rule-actions">
+      <label class="switch" title="${r(a(e.active?"rules.turnOff":"rules.turnOn"))}">
+        <input type="checkbox" data-change="rule-active" data-id="${e.id}" ${e.active?"checked":""} aria-label="${r(a("rules.activeLabel"))}">
+        <span class="switch-track" aria-hidden="true"></span>
+      </label>
+      <button type="button" class="icon-btn" data-action="rule-edit" data-id="${e.id}" aria-label="${r(a("rules.edit"))}">${f("pencil")}</button>
+      <button type="button" class="icon-btn" data-action="rule-delete" data-id="${e.id}" aria-label="${r(a("rules.delete"))}">${f("trash")}</button>
+    </div>
+  </li>`}var Ys=e=>c.doc.rules.find(t=>t.id===e);oe({"rule-active":e=>{x(t=>{let s=t.rules.find(n=>n.id===e.dataset.id);if(!s)return!1;s.active=e.checked})}});P({"rule-new":e=>Gs(null,{studentIds:e.dataset.student?[e.dataset.student]:[]}),"rule-edit":e=>{let t=Ys(e.dataset.id);t&&Gs(t)},"rule-delete":e=>{let t=Ys(e.dataset.id);t&&(x(s=>{s.rules=s.rules.filter(n=>n.id!==t.id)}),M(a("rules.deleted"),{action:{label:a("common.undo"),run:U}}))},"rule-soften":e=>{x(t=>{let s=t.rules.find(n=>n.id===e.dataset.id);if(!s||!Se(s))return!1;s.strength="soft"}),M(a("rules.softened"),{action:{label:a("common.undo"),run:U}})},"rule-toggle":e=>{x(t=>{let s=t.rules.find(n=>n.id===e.dataset.id);if(!s)return!1;s.active=!s.active})}});var v=null,ce=null,Vs={studentIds:[]};function Gs(e,t={}){ce=e?.id??null,Vs={studentIds:t.studentIds??[]},e?(v=structuredClone(e),q(Qs(),{wide:!0,onClose:Ks})):(v=null,q(Xs(),{wide:!0,onClose:Ks}))}function Ks(){v=null,ce=null}function Xs(){return`<div class="dialog-form">
+    ${W(r(a("rules.pickTitle")),r(a("rules.pickSubtitle")))}
+    <div class="type-grid">
+      ${Yt.map(e=>`<button type="button" class="type-card" data-action="rule-type" data-type="${e}">
+          <span class="type-icon">${f(yt[e])}</span>
+          <span class="type-name">${r(a(`rules.types.${e}.name`))}</span>
+          <span class="type-desc">${r(a(`rules.types.${e}.desc`))}</span>
+          <span class="type-kind">${r(a(`rules.types.${e}.kind`))}</span>
+        </button>`).join("")}
+    </div>
+  </div>`}function Pn(e){let t=D[e],s={};for(let[n,o]of Object.entries(t.params??{}))s[n]=o.default;return ne(e,{strength:t.defaultStrength,params:s,studentIds:Vs.studentIds.slice(0,t.students.max)})}function Qs(){let e=E(),t=D[v.type],s=v.type,n=[...e.doc.students].sort((m,$)=>Number($.included)-Number(m.included)),l=t.students.max===1?`<label class="field"><span class="field-label">${r(a("rules.editor.student"))}</span>
+        <select class="input" data-change="rule-student" required>
+          <option value="">${r(a("rules.editor.chooseStudent"))}</option>
+          ${n.map(m=>`<option value="${m.id}" ${v.studentIds[0]===m.id?"selected":""}>${r(e.studentLabel(m.id))}${m.included?"":` (${r(a("students.excluded"))})`}</option>`).join("")}
+        </select></label>`:`<fieldset class="field">
+        <legend class="field-label">${r(a("rules.editor.students"))} <span class="muted" id="rule-student-count">${r(Js(t))}</span></legend>
+        ${n.length>8?`<input type="search" class="input input-sm" placeholder="${r(a("students.filter"))}" data-input="rule-filter" aria-label="${r(a("students.filter"))}">`:""}
+        <div class="check-list" id="rule-students">
+          ${n.map(m=>`<label class="check-label" data-name="${r(K(m.name))}"><input type="checkbox" class="check" data-change="rule-student-toggle" value="${m.id}" ${v.studentIds.includes(m.id)?"checked":""}>
+                <span>${r(e.studentLabel(m.id))}</span>${m.included?"":`<span class="muted"> \xB7 ${r(a("students.excluded"))}</span>`}</label>`).join("")}
+        </div>
+      </fieldset>`,i=t.seats?`<fieldset class="field">
+        <legend class="field-label">${r(a(t.seats.max===1?"rules.editor.seat":"rules.editor.seats"))}</legend>
+        <p class="field-hint">${r(a(t.seats.max===1?"rules.editor.seatHint":"rules.editor.seatsHint"))}</p>
+        <div class="mini-chart" id="rule-seat-picker">${re(e,{mode:"pick",picked:new Set(v.seatIds),compact:!0})}</div>
+        <p class="muted" id="rule-seat-summary" aria-live="polite">${en(e)}</p>
+      </fieldset>`:"",d=t.params?.rows,u=d?`<div class="field">
+        <label class="field-label" for="rule-rows">${r(a(`rules.editor.rows.${s}`))}</label>
+        <div class="inline-field">
+          <input id="rule-rows" class="input input-num" type="number" min="${d.min}" max="${Math.max(1,e.topo.rowCount)}" value="${v.params.rows}" data-input="rule-rows">
+          <span class="muted">${r(a("rules.editor.rowsOf",{count:e.topo.rowCount}))}</span>
+        </div>
+        <div class="mini-chart" id="rule-row-preview">${tn(e)}</div>
+      </div>`:"",b=t.strengths.length>1?`<fieldset class="field">
+          <legend class="field-label">${r(a("rules.editor.strength"))}</legend>
+          <div class="segmented">
+            ${["hard","soft"].map(m=>`<label class="segment"><input type="radio" name="strength" value="${m}" data-change="rule-strength" ${v.strength===m?"checked":""}>
+                  <span><strong>${r(a(`rules.strength.${m}`))}</strong><small>${r(a(`rules.strengthHint.${m}`))}</small></span></label>`).join("")}
+          </div>
+        </fieldset>`:`<p class="field-note">${f("info")}<span>${r(a(`rules.onlyStrength.${t.strengths[0]}`))}</span></p>`;return`<form class="dialog-form rule-form" data-form="save-rule" novalidate>
+    ${W(`${f(yt[s])} ${r(a(`rules.types.${s}.name`))}`,r(a(`rules.types.${s}.desc`)))}
+    ${l}
+    ${i}
+    ${u}
+    ${b}
+    <div id="rule-importance">${Zs()}</div>
+    <div class="rule-preview" aria-live="polite"><span class="field-label">${r(a("rules.editor.preview"))}</span><p id="rule-preview">${sn(e)}</p></div>
+    <p class="form-error" id="rule-error" role="alert"></p>
+    <footer class="dialog-foot">
+      ${ce?`<button type="button" class="btn btn-ghost btn-danger-text" data-action="rule-delete-in-editor">${f("trash")}<span>${r(a("common.delete"))}</span></button>`:""}
+      <span class="spacer"></span>
+      ${ce?"":`<button type="button" class="btn btn-ghost" data-action="rule-back">${r(a("common.back"))}</button>`}
+      <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+      <button type="submit" class="btn btn-primary">${r(a(ce?"common.save":"rules.editor.create"))}</button>
+    </footer>
+  </form>`}var Js=e=>e.students.max>=40?a("rules.editor.selectedAny",{count:v.studentIds.length}):a("rules.editor.selectedRange",{count:v.studentIds.length,min:e.students.min,max:e.students.max});function Zs(){return v.strength!=="soft"?"":`<label class="field"><span class="field-label">${r(a("rules.editor.importance"))}</span>
+    <select class="input" data-change="rule-importance">
+      ${["normal","high"].map(e=>`<option value="${e}" ${v.importance===e?"selected":""}>${r(a(`rules.importance.${e}`))}</option>`).join("")}
+    </select></label>`}function en(e){return v.seatIds.length?r(a("rules.editor.seatsChosen",{seats:v.seatIds.map(t=>e.seatLabel(t)).join(", ")})):r(a("rules.editor.noSeats"))}function tn(e){let t=Number(v.params.rows)||1,s=v.type==="front"?e.topo.inFrontRows:e.topo.inBackRows,n=new Set(e.topo.usableIds.filter(o=>s(o,t)));return re(e,{mode:"print",highlight:n,compact:!0})}function sn(e){return v.studentIds.length&&(!D[v.type].seats||v.seatIds.length)?de(v,e):`<span class="muted">${r(a("rules.editor.previewEmpty"))}</span>`}function ge(){let e=E(),t=D[v.type],s=(o,l)=>{let i=document.getElementById(o);i&&(i.innerHTML=l)};s("rule-preview",sn(e)),s("rule-importance",Zs());let n=document.getElementById("rule-student-count");n&&(n.textContent=Js(t)),s("rule-seat-summary",en(e)),t.params?.rows&&s("rule-row-preview",tn(e)),s("rule-error","")}P({"rule-type":e=>{v=Pn(e.dataset.type),dt(Qs())},"rule-back":()=>{v=null,dt(Xs())},"pick-seat":e=>{if(!v)return;let t=e.dataset.seat;D[v.type].seats.max===1?v.seatIds=v.seatIds[0]===t?[]:[t]:v.seatIds=v.seatIds.includes(t)?v.seatIds.filter(o=>o!==t):[...v.seatIds,t];let n=new Set(v.seatIds);for(let o of document.querySelectorAll("#rule-seat-picker [data-seat]")){let l=n.has(o.getAttribute("data-seat"));o.classList.toggle("is-picked",l),o.setAttribute("aria-pressed",String(l))}ge()},"rule-delete-in-editor":async()=>{let e=ce;O(),await Z({title:r(a("rules.deleteConfirm")),confirm:a("common.delete")})&&x(t=>{t.rules=t.rules.filter(s=>s.id!==e)})}});oe({"rule-student":e=>{v.studentIds=e.value?[e.value]:[],ge()},"rule-student-toggle":e=>{let t=e.value;v.studentIds=e.checked?[...v.studentIds,t]:v.studentIds.filter(s=>s!==t),ge()},"rule-strength":e=>{v.strength=e.value,ge()},"rule-importance":e=>{v.importance=e.value,ge()}});fe({"rule-rows":e=>{let t=Math.round(Number(e.value));!Number.isFinite(t)||t<1||(v.params={...v.params,rows:t},ge())},"rule-filter":e=>{let t=K(e.value);for(let s of document.querySelectorAll("#rule-students [data-name]"))s.hidden=!!t&&!s.getAttribute("data-name").includes(t)}});z({"save-rule":()=>{if(!v||!Be())return;let e=D[v.type],t=Gt(v);if(t){let o=t==="students"?e.students.max===1?a("rules.editor.needStudent"):a("rules.editor.needStudents",{min:e.students.min,max:e.students.max}):a(e.seats.max===1?"rules.editor.needSeat":"rules.editor.needSeats");document.getElementById("rule-error").textContent=o;return}let s={...v,studentIds:[...new Set(v.studentIds)]},n=ce;x(o=>{n?o.rules=o.rules.map(l=>l.id===n?s:l):o.rules.push(s)}),c.ui.tab="rules",O(),M(a(n?"rules.saved":"rules.added"),{kind:"success"})}});var vt=20,Bn=24;function an(e){let{rows:t,cols:s}=e.doc.layout,n=(o,l,i,d,u)=>`
+    <div class="stepper" role="group" aria-label="${r(o)}">
+      <span class="stepper-label">${r(o)}</span>
+      <button type="button" class="icon-btn" data-action="${i}" ${l<=1?"disabled":""} aria-label="${r(a("layout.fewer",{what:o}))}">${f("minus")}</button>
+      <span class="stepper-value" aria-live="polite">${l}</span>
+      <button type="button" class="icon-btn" data-action="${d}" ${l>=u?"disabled":""} aria-label="${r(a("layout.more",{what:o}))}">${f("plus")}</button>
+    </div>`;return`
+    <div class="layout-title">${f("grid")}<span>${r(a("layout.editing"))}</span>
+      <span class="muted">${r(a("layout.seatCount",{count:e.usableSeats}))}</span></div>
+    <div class="stage-actions">
+      ${n(a("layout.rows"),t,"row-remove","row-add",vt)}
+      ${n(a("layout.columns"),s,"col-remove","col-add",Bn)}
+      <button type="button" class="btn btn-ghost btn-sm" data-action="quick-layout">${f("sparkle")}<span>${r(a("layout.quick"))}</span></button>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="adjacency">${f("link")}<span>${r(a("layout.neighbors"))}</span></button>
+      <button type="button" class="btn btn-primary btn-sm" data-action="toggle-layout">${f("check")}<span>${r(a("common.done"))}</span></button>
+    </div>`}function on(e){let t=c.ui.selection?.seatId,s=t&&e.topo.seat(t);if(!s)return`<p class="layout-hint">${f("info")}<span>${r(a("layout.hint"))}</span></p>`;let n=e.occupant.get(s.id);return`<section class="inspector" aria-label="${r(a("layout.seatPanel"))}">
+    <div class="inspector-head">
+      <div><h3 class="inspector-title">${r(a("inspector.seatTitle",{seat:e.seatLabel(s.id)}))}</h3>
+        <p class="inspector-sub">${r(s.enabled?n?e.studentLabel(n):a("chart.empty"):a("chart.unavailable"))}</p></div>
+      <button type="button" class="icon-btn" data-action="clear-selection" aria-label="${r(a("common.close"))}">${f("x")}</button>
+    </div>
+    <p class="hint">${r(a("layout.moveHint"))}</p>
+    <form class="add-row" data-form="rename-seat">
+      <input type="hidden" name="id" value="${s.id}">
+      <label class="sr-only" for="seat-label">${r(a("layout.labelField"))}</label>
+      <input id="seat-label" name="label" maxlength="12" value="${r(s.label)}" placeholder="${r(a("layout.labelPlaceholder",{auto:e.seatLabel(s.id)}))}" autocomplete="off">
+      <button type="submit" class="btn btn-secondary btn-sm">${r(a("layout.rename"))}</button>
+    </form>
+    <div class="inspector-actions">
+      <button type="button" class="btn btn-secondary btn-sm" data-action="seat-toggle" data-id="${s.id}">${f(s.enabled?"eye-off":"check")}<span>${r(a(s.enabled?"layout.disable":"layout.enable"))}</span></button>
+      <button type="button" class="btn btn-ghost btn-sm btn-danger-text" data-action="seat-remove" data-id="${s.id}">${f("trash")}<span>${r(a("layout.remove"))}</span></button>
+    </div>
+  </section>`}async function wt(e,t){if(!e.length)return!0;let s=Ls(c.doc,e);if(s.seated||s.rules){let n=[s.seated?a("layout.removeSeated",{count:s.seated}):"",s.rules?a("layout.removeRules",{count:s.rules}):""].filter(Boolean).map(o=>`<p>${r(o)}</p>`).join("");if(!await Z({title:r(t),body:n,confirm:a("layout.removeConfirm",{count:e.length})}))return!1}return!0}function kt(e){e&&M(a("layout.rulesDropped",{count:e}),{kind:"warn",action:{label:a("common.undo"),run:U}})}function rn(e,t,s){x(n=>{if(n.seats.some(l=>l.row===t&&l.col===s))return!1;let o=n.seats.find(l=>l.id===e);if(!o)return!1;o.row=t,o.col=s})}function ln(e,t){if(t.dataset.cell){let[s,n]=t.dataset.cell.split(",").map(Number);rn(e,s,n)}else if(t.dataset.seat&&t.dataset.seat!==e){let s=t.dataset.seat;x(n=>{let o=n.seats.find(i=>i.id===e),l=n.seats.find(i=>i.id===s);if(!o||!l)return!1;[o.row,o.col,l.row,l.col]=[l.row,l.col,o.row,o.col]})}}P({"toggle-layout":()=>{c.ui.editingLayout=!c.ui.editingLayout,c.ui.selection=null,A()},"layout-seat":e=>{let t=e.dataset.seat;c.ui.selection=c.ui.selection?.seatId===t?null:{seatId:t},A()},"layout-cell":e=>{let[t,s]=e.dataset.cell.split(",").map(Number),n=c.ui.selection?.seatId;if(n){rn(n,t,s);return}let o=j();x(l=>{l.seats.push({id:o,row:t,col:s,enabled:!0,label:""})})},"seat-toggle":e=>{let t=c.doc.seats.find(n=>n.id===e.dataset.id);if(!t)return;let s=E().occupant.get(t.id);x(n=>Ts(n,t.id,!t.enabled)),s&&t.enabled&&M(a("layout.disabledUnseated",{name:E().studentLabel(s)}),{action:{label:a("common.undo"),run:U}})},"seat-remove":async e=>{let t=e.dataset.id;if(!await wt([t],a("layout.removeTitle")))return;let s=0;x(n=>{s=qe(n,[t])}),c.ui.selection=null,A(),kt(s)},"row-add":()=>x(e=>Ms(e)),"col-add":()=>x(e=>{e.layout.cols+=1}),"row-remove":async()=>nn(c.doc.layout.rows-1,c.doc.layout.cols),"col-remove":async()=>nn(c.doc.layout.rows,c.doc.layout.cols-1),"quick-layout":()=>Fn(),adjacency:()=>Un()});async function nn(e,t){if(e<1||t<1)return;let s=mt(c.doc,e,t);if(!await wt(s,a("layout.shrinkTitle",{count:s.length})))return;let n=0;x(o=>{n=Cs(o,e,t)}),kt(n)}z({"rename-seat":e=>{let t=String(e.get("id")),s=String(e.get("label")??"").trim();x(n=>{let o=n.seats.find(l=>l.id===t);if(!o||o.label===s)return!1;o.label=s})}});var St=(e={})=>{let{rows:t=5,desksPerRow:s=3,seatsPerDesk:n=2,aisles:o=!0}=e,l=(i,d,u,b)=>`<label class="field field-num"><span class="field-label">${r(d)}</span>
+    <input class="input input-num" type="number" name="${i}" min="1" max="${b}" value="${u}" required data-input="layout-preview"></label>`;return`<div class="field-grid">
+      ${l("rows",a("layout.form.rows"),t,vt)}
+      ${l("desksPerRow",a("layout.form.desks"),s,8)}
+      ${l("seatsPerDesk",a("layout.form.seatsPerDesk"),n,6)}
+    </div>
+    <label class="check-label"><input type="checkbox" class="check" name="aisles" ${o?"checked":""} data-input="layout-preview"> ${r(a("layout.form.aisles"))}</label>
+    <p class="muted" id="layout-preview" aria-live="polite">${r(a("layout.form.preview",{count:t*s*n}))}</p>`};function We(e){let t=(s,n)=>Math.min(n,Math.max(1,Math.round(Number(e.get(s))||1)));return{rows:t("rows",vt),desksPerRow:t("desksPerRow",8),seatsPerDesk:t("seatsPerDesk",6),aisles:e.get("aisles")==="on"}}fe({"layout-preview":e=>{let t=e.closest("form"),s=t?.querySelector("#layout-preview");if(!s)return;let n=We(new FormData(t));s.textContent=a("layout.form.preview",{count:n.rows*n.desksPerRow*n.seatsPerDesk})}});function Fn(){q(`
+    <form class="dialog-form" data-form="quick-layout">
+      ${W(r(a("layout.quickTitle")),r(a("layout.quickSubtitle")))}
+      ${St()}
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+        <button type="submit" class="btn btn-primary">${r(a("layout.quickApply"))}</button>
+      </footer>
+    </form>`)}z({"quick-layout":async e=>{let t=We(e);O();let s=Rs(c.doc,t);if(!await wt(s,a("layout.quickConfirm",{count:s.length})))return;let n=0;x(o=>{n=As(o,t)}),c.ui.selection=null,A(),kt(n)}});function Un(){let e=c.doc.adjacency;q(`
+    <form class="dialog-form" data-form="adjacency">
+      ${W(r(a("layout.neighborsTitle")),r(a("layout.neighborsSubtitle")))}
+      <p class="field-note">${f("check")}<span>${r(a("layout.neighborsAlways"))}</span></p>
+      <label class="check-label check-block"><input type="checkbox" class="check" name="frontBack" ${e.frontBack?"checked":""}>
+        <span><strong>${r(a("layout.frontBack"))}</strong><small>${r(a("layout.frontBackHint"))}</small></span></label>
+      <label class="check-label check-block"><input type="checkbox" class="check" name="diagonal" ${e.diagonal?"checked":""}>
+        <span><strong>${r(a("layout.diagonal"))}</strong><small>${r(a("layout.diagonalHint"))}</small></span></label>
+      <p class="muted">${r(a("layout.neighborsNote"))}</p>
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+        <button type="submit" class="btn btn-primary">${r(a("common.save"))}</button>
+      </footer>
+    </form>`)}z({adjacency:e=>{let t={frontBack:e.get("frontBack")==="on",diagonal:e.get("diagonal")==="on"};O(),x(s=>{if(s.adjacency.frontBack===t.frontBack&&s.adjacency.diagonal===t.diagonal)return!1;s.adjacency=t})}});var qn=["Ava Martin","Liam Chen","Mia Rossi","Noah Patel","Zoe Okafor","Ethan Novak","Lucia G\xF3mez","Omar Haddad","Chloe Dubois","Leo Schmidt","Aria Kim","Mateo Silva","Isla Murphy","Kai Nakamura","Nora Lindqvist","Felix Wagner","Amara Mensah","Hugo Laurent","Ivy Thompson","Ravi Sharma","Elena Petrova","Sam Kowalski","Lena Fischer","Theo Brooks"];function dn({name:e}){let t=Te({name:e,rows:5,desksPerRow:3,seatsPerDesk:2,aisles:!0});t.demo=!0,t.students=qn.map(p=>Ce(p));let[s,n,o,l,i,d,,u,,b,m]=t.students,$=$e(t.seats);t.rules=[ne("apart",{studentIds:[n.id,l.id]}),ne("apart",{studentIds:[d.id,u.id,b.id]}),ne("together",{studentIds:[o.id,i.id],strength:"soft"}),ne("front",{studentIds:[s.id],params:{rows:1}}),ne("fixed",{studentIds:[m.id],seatIds:[$.at(-1).id]})];let k=Ue(t);if(k.ok){let p={seed:k.seed,generatedAt:t.createdAt,uniqueness:k.uniqueness,...k.stats};t.plan={id:j(),createdAt:t.createdAt,assignments:k.assignments,generated:{assignments:k.assignments,info:p},edited:!1}}return t}function cn(){return c.index.length?`<ul class="classroom-list">
+    ${c.index.map(e=>`<li class="classroom-row${c.doc?.id===e.id?" is-current":""}">
+          <button type="button" class="classroom-open" data-action="open-classroom" data-id="${e.id}">
+            <span class="classroom-row-name">${r(e.name)}${e.demo?` <span class="tag">${r(a("demo.tag"))}</span>`:""}</span>
+            <span class="muted">${r(a("classrooms.meta",{count:e.students,date:me(e.updatedAt)}))}</span>
+          </button>
+          <span class="row-buttons">
+            <button type="button" class="icon-btn" data-action="rename-classroom" data-id="${e.id}" aria-label="${r(a("classrooms.rename",{name:e.name}))}">${f("pencil")}</button>
+            <button type="button" class="icon-btn" data-action="delete-classroom" data-id="${e.id}" aria-label="${r(a("classrooms.delete",{name:e.name}))}">${f("trash")}</button>
+          </span>
+        </li>`).join("")}
+  </ul>`:""}var un=()=>`
+  <form class="dialog-form create-form" data-form="create-classroom">
+    <label class="field"><span class="field-label">${r(a("classrooms.nameLabel"))}</span>
+      <input class="input" name="name" maxlength="60" required placeholder="${r(a("classrooms.namePlaceholder"))}" autocomplete="off"></label>
+    <p class="field-label">${r(a("classrooms.layoutLabel"))}</p>
+    ${St()}
+    <p class="muted">${r(a("classrooms.layoutLater"))}</p>
+    <button type="submit" class="btn btn-primary btn-block">${f("plus")}<span>${r(a("classrooms.create"))}</span></button>
+  </form>`;function xt(){return`<div class="welcome">
+    <div class="welcome-intro">
+      <svg class="welcome-logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      <h1 class="welcome-title">${r(a("app.name"))}</h1>
+      <p class="welcome-tagline">${r(a("app.tagline"))}</p>
+      <p class="welcome-text">${r(a("welcome.text"))}</p>
+      <ol class="welcome-steps">
+        ${["layout","students","rules","generate"].map((e,t)=>`<li><span class="step-num">${t+1}</span>${r(a(`welcome.steps.${e}`))}</li>`).join("")}
+      </ol>
+    </div>
+    <div class="welcome-card">
+      <h2 class="card-title">${r(a("welcome.createTitle"))}</h2>
+      ${un()}
+      <div class="welcome-alt">
+        <button type="button" class="btn btn-link" data-action="open-demo">${f("sparkle")}<span>${r(a("demo.open"))}</span></button>
+        <label class="btn btn-link file-btn">${f("upload")}<span>${r(a("classrooms.import"))}</span>
+          <input type="file" accept="application/json,.json" data-change="import-backup" class="sr-only"></label>
+      </div>
+      ${c.index.length?`<h3 class="section-title">${r(a("classrooms.yours"))}</h3>${cn()}`:""}
+    </div>
+  </div>`}function _n(){q(`<div class="dialog-form">
+      ${W(r(a("classrooms.title")))}
+      ${cn()}
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" data-action="new-classroom">${f("plus")}<span>${r(a("classrooms.new"))}</span></button>
+        <button type="button" class="btn btn-ghost" data-action="open-demo">${f("sparkle")}<span>${r(a("demo.open"))}</span></button>
+        <label class="btn btn-ghost file-btn">${f("upload")}<span>${r(a("classrooms.import"))}</span>
+          <input type="file" accept="application/json,.json" data-change="import-backup" class="sr-only"></label>
+      </div>
+    </div>`,{wide:!0})}async function It(){let e=c.index.find(t=>t.demo);e&&await pe(e.id)||await Ne(dn({name:a("demo.name")}))}P({"open-classrooms":_n,"new-classroom":()=>q(`<div class="dialog-form">${W(r(a("welcome.createTitle")))}${un()}</div>`),"open-classroom":async e=>{O(),await pe(e.dataset.id)||M(a("classrooms.missing"),{kind:"error"})},"open-demo":()=>(O(),It()),"rename-classroom":e=>{let t=c.index.find(s=>s.id===e.dataset.id);t&&q(`<form class="dialog-form" data-form="rename-classroom">
+      ${W(r(a("classrooms.renameTitle")))}
+      <input type="hidden" name="id" value="${t.id}">
+      <label class="field"><span class="field-label">${r(a("classrooms.nameLabel"))}</span>
+        <input class="input" name="name" value="${r(t.name)}" maxlength="60" required autocomplete="off"></label>
+      <footer class="dialog-foot">
+        <button type="button" class="btn btn-ghost" data-action="close-dialog">${r(a("common.cancel"))}</button>
+        <button type="submit" class="btn btn-primary">${r(a("common.save"))}</button>
+      </footer>
+    </form>`)},"delete-classroom":async e=>{let t=c.index.find(n=>n.id===e.dataset.id);!t||!await Z({title:r(a("classrooms.deleteTitle",{name:t.name})),body:`<p>${r(a("classrooms.deleteBody",{count:t.students}))}</p>`,confirm:a("classrooms.deleteConfirm")})||(await ts(t.id),M(a("classrooms.deleted",{name:t.name})))},"export-backup":()=>{let e=c.doc;De(`${Ee(e.name)}.classshuffle.json`,JSON.stringify(e,null,2),"application/json")}});z({"create-classroom":async e=>{let t=String(e.get("name")??"").trim();t&&(O(),c.ui.tab="students",await Ne(Te({name:t,...We(e)})),document.getElementById("new-student")?.focus())},"rename-classroom":async e=>{let t=String(e.get("id")),s=String(e.get("name")??"").trim();s&&(O(),!(c.doc?.id!==t&&!await pe(t))&&x(n=>{n.name=s}))}});oe({"import-backup":async e=>{let t=e.files?.[0];if(e.value="",!!t)try{let s=JSON.parse(await t.text());if(!s||!Array.isArray(s.seats)||!Array.isArray(s.students)||!s.layout)throw new Error("not a classroom");let n=Me({...s,id:j(),updatedAt:new Date().toISOString()});O(),await Ne(n),M(a("classrooms.imported",{name:n.name}),{kind:"success"})}catch(s){console.error(s),M(a("classrooms.importFailed"),{kind:"error"})}}});function pn(){return E().doc.demo?`<div class="demo-banner">${f("sparkle")}<span>${r(a("demo.banner"))}</span>
+    <button type="button" class="btn btn-link btn-sm" data-action="delete-classroom" data-id="${c.doc.id}">${r(a("demo.delete"))}</button></div>`:""}var Wn=e=>{let t=String(e??"");return/[",\n\r]/.test(t)?`"${t.replace(/"/g,'""')}"`:t};function Yn(e){let t=[[a("export.csvSeat"),a("export.csvRow"),a("export.csvStudent"),a("export.csvNotes")]];for(let s of $e(e.doc.seats)){if(!s.enabled)continue;let n=e.occupant.get(s.id),o=n?e.student(n):null;t.push([e.seatLabel(s.id),e.topo.rowRank(s.id)+1,o?e.studentLabel(n):"",o?.notes??""])}for(let s of e.unseated)t.push(["","",e.studentLabel(s.id),s.notes]);return`\uFEFF${t.map(s=>s.map(Wn).join(",")).join(`\r
+`)}\r
+`}function Gn(){let e=E(),t=document.getElementById("print-sheet"),s=[...e.doc.students].filter(n=>n.included).sort((n,o)=>e.studentLabel(n.id).localeCompare(e.studentLabel(o.id))).map(n=>`<li><span>${r(e.studentLabel(n.id))}</span><span>${r(e.seatOf.has(n.id)?e.seatLabel(e.seatOf.get(n.id)):"\u2014")}</span></li>`).join("");t.innerHTML=`
+    <header class="print-head">
+      <h1>${r(e.doc.name)}</h1>
+      <p>${r(a("export.printDate",{date:rs(new Date().toISOString())}))}</p>
+    </header>
+    ${re(e,{mode:"print"})}
+    <section class="print-roster"><h2>${r(a("export.roster"))}</h2><ol>${s}</ol></section>`,window.print()}P({print:()=>{c.doc?.plan&&Gn()},"export-csv":()=>{c.doc?.plan&&De(`${Ee(c.doc.name)}-seating.csv`,Yn(E()),"text/csv;charset=utf-8")}});var V=e=>document.getElementById(e),Kn={saved:"check",saving:"save",unsaved:"dot",error:"alert"};function zn(){let e=c.doc,t=`<span class="brand" aria-label="${r(a("app.name"))}">
+      <svg class="brand-logo" aria-hidden="true"><use href="#i-logo"/></svg>
+      <span class="brand-name">${r(a("app.name"))}</span></span>`;if(!e)return t;let s=c.ui.generating;return`${t}
+    <span class="topbar-sep" aria-hidden="true"></span>
+    <button type="button" class="classroom-switch" data-action="open-classrooms" aria-haspopup="dialog" title="${r(a("header.switch"))}">
+      <span class="classroom-name">${r(e.name)}</span>${f("chevron-down")}
+    </button>
+    <span class="save-status save-${c.save}" role="status">${f(Kn[c.save])}<span>${r(a(`header.save.${c.save}`))}</span></span>
+    <span class="spacer"></span>
+    <div class="history" role="group" aria-label="${r(a("header.history"))}">
+      <button type="button" class="icon-btn" data-action="undo" ${c.past.length?"":"disabled"} aria-label="${r(a("header.undo"))}" title="${r(a("header.undoHint"))}">${f("undo")}</button>
+      <button type="button" class="icon-btn" data-action="redo" ${c.future.length?"":"disabled"} aria-label="${r(a("header.redo"))}" title="${r(a("header.redoHint"))}">${f("redo")}</button>
+    </div>
+    <button type="button" class="btn btn-primary btn-generate" data-action="generate" ${s?'disabled aria-busy="true"':""}>
+      ${s?'<span class="spinner" aria-hidden="true"></span>':f("shuffle")}
+      <span>${r(a(s?"header.generating":e.plan?"header.generateAnother":"header.generate"))}</span>
+    </button>`}function Vn(){return`<div class="workspace">
+    <section class="stage" aria-label="${r(a("stage.label"))}">
+      <div id="demo-banner"></div>
+      <div class="stage-bar" id="stage-bar"></div>
+      <div id="notices" class="notices"></div>
+      <div class="chart-scroll" id="chart"></div>
+      <div id="tray"></div>
+      <div id="inspector"></div>
+    </section>
+    <aside class="sidebar" aria-label="${r(a("sidebar.label"))}">
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="tab-panel" id="tab-panel" role="tabpanel"></div>
+    </aside>
+  </div>`}var Ie=["students","rules","saved"];function Xn(e){let t={students:e.doc.students.length,rules:e.doc.rules.length,saved:e.doc.saved.length};return Ie.map(s=>`<button type="button" role="tab" id="tab-${s}" class="tab" data-action="tab" data-tab="${s}"
+      aria-selected="${c.ui.tab===s}" aria-controls="tab-panel" tabindex="${c.ui.tab===s?0:-1}">
+      ${r(a(`sidebar.${s}`))}<span class="tab-count">${t[s]}</span></button>`).join("")}function Qn(e){return c.ui.tab==="rules"?zs(e):c.ui.tab==="saved"?Fs(e):qs(e)}function Jn(e){if(e.doc.plan||c.ui.editingLayout)return"";let t=e.doc.students.length?e.includedCount>e.usableSeats?"stage.hintTooMany":"stage.hintReady":"stage.hintNoStudents";return`<p class="stage-hint">${f("info")}<span>${r(a(t,{count:e.includedCount}))}</span></p>`}var Ye=null;function mn(){J(V("topbar"),zn());let e=V("main");if(!c.doc){Ye!=="welcome"?(e.innerHTML=xt(),Ye="welcome"):J(e,xt()),document.title=a("app.name");return}Ye!=="workspace"&&(e.innerHTML=Vn(),Ye="workspace"),document.title=`${c.doc.name} \xB7 ${a("app.name")}`;let t=E(),s=c.ui.editingLayout;e.querySelector(".workspace").classList.toggle("is-layout",s),J(V("demo-banner"),pn()),J(V("stage-bar"),s?an(t):Ns(t)),J(V("notices"),s?"":js(t)+Jn(t)),J(V("chart"),re(t,{mode:s?"layout":"plan",selection:c.ui.selection})),J(V("tray"),s?"":Ps(t)),J(V("inspector"),s?on(t):Bs(t)),J(V("tabs"),Xn(t)),J(V("tab-panel"),Qn(t))}P({undo:()=>U(),redo:()=>He(),tab:e=>{c.ui.tab=e.dataset.tab,A(),V(`tab-${e.dataset.tab}`)?.focus()}});function Zn(e){let t=e.target.closest?.("input, textarea, select, [contenteditable]"),s=e.ctrlKey||e.metaKey;if(!(!c.doc||Be())){if(s&&!t&&e.key.toLowerCase()==="z")e.preventDefault(),e.shiftKey?He():U();else if(s&&!t&&e.key.toLowerCase()==="y")e.preventDefault(),He();else if(e.key==="Escape"&&c.ui.selection)c.ui.selection=null,A();else if((e.key==="ArrowLeft"||e.key==="ArrowRight")&&e.target.matches?.("[role=tab]")){let n=Ie.indexOf(c.ui.tab);c.ui.tab=Ie[(n+(e.key==="ArrowRight"?1:Ie.length-1))%Ie.length],A(),V(`tab-${c.ui.tab}`)?.focus()}}}function ea(e,t){c.doc&&(e.kind==="student"&&t.dataset.drop==="seat"&&!c.ui.editingLayout?(c.ui.selection=null,xe(e.id,t.dataset.seat)):e.kind==="seat"&&c.ui.editingLayout&&ln(e.id,t))}async function ta(){ds(),ps(),fs(ea),document.addEventListener("keydown",Zn),window.addEventListener("beforeunload",()=>Oe()),Xt(mn);try{localStorage.setItem("classshuffle.check","1"),localStorage.removeItem("classshuffle.check")}catch{M(a("app.storageUnavailable"),{kind:"error"})}if(await es(),new URLSearchParams(location.search).has("demo"))return It();let e=Je();e&&await pe(e)||mn()}ta();})();
+</script>
+</body>
+</html>

@@ -56,6 +56,7 @@ npm run sync:classshuffle
 
 - No tiene cuentas ni servidor: todo se guarda en el navegador del visitante, así que la copia es la app completa (sin tests ni archivos de desarrollo).
 - **Ver demo** abre `classshuffle/?demo`, que entra directo a un aula de ejemplo con alumnos ficticios y un plano ya generado.
+- El script también genera `classshuffle/ClassShuffle.html`: la app completa en un solo archivo que se abre con doble clic, sin servidor ni internet. El botón **Descargar para usar sin internet** la ofrece. Guarda sus datos aparte de la versión web; para pasar un aula de una a otra se usan los backups (descargar e importar).
 
 ## 🚀 Cómo Usar
 
