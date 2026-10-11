@@ -1,0 +1,49 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode
+.idea
+
+# Node modules (si usas Node.js)
+node_modules/
+npm-debug.log
+yarn-debug.log
+
+# Archivos de editor
+.editorconfig
+*.sublime-project
+*.sublime-workspace
+
+# Archivos de compilación
+dist/
+build/
+*.min.js
+*.min.css
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
