@@ -48,6 +48,10 @@ npm run sync:pympocket
 - La copia del sitio es **solo demo**: el script activa `DEMO_ONLY` y quita la conexión con Supabase. Siempre abre con datos de ejemplo (que quedan solo en el navegador del visitante), sin login ni cuentas, y tiene un botón para reiniciarla.
 - **Crear cuenta** (en el sitio y dentro de la demo) lleva a la app real: <https://pympocket.netlify.app/>.
 
+### Al publicar cambios de estilos o JavaScript
+
+En `index.html`, `styles.css`, `i18n.js` y `script.js` se cargan con `?v=N`. Al cambiar alguno de esos archivos, subir el número (por ejemplo `?v=3`): así los navegadores bajan la versión nueva en vez de usar la que tenían guardada, que mezclada con el HTML nuevo se ve mal.
+
 ### Idiomas
 
 El texto en español está escrito en `index.html`. Cada texto traducible lleva `data-i18n="clave"` (o `data-i18n-alt`, `data-i18n-placeholder`, `data-i18n-label` para atributos) y su versión en inglés está en `i18n.js`. Para agregar un texto nuevo: marcarlo en el HTML y sumar la clave en inglés.
