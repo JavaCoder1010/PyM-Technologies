@@ -7,6 +7,7 @@ Sitio web profesional para PyM Technologies, empresa especializada en automatiza
 - ✅ Diseño responsive y moderno
 - ✅ Menú hamburguesa para dispositivos móviles
 - ✅ Sección de servicios con tarjetas interactivas
+- ✅ Sección de proyectos con PymPocket (demo en vivo en `/pympocket/`)
 - ✅ Formulario de contacto funcional
 - ✅ Animaciones suaves
 - ✅ Navegación activa
@@ -22,10 +23,25 @@ pym-technologies/
 │   └── styles.css      # Estilos CSS
 ├── js/
 │   └── script.js       # JavaScript interactivo
+├── img/pympocket/      # Capturas de PymPocket para la sección Proyectos
+├── pympocket/          # App PymPocket publicada (copia generada, no editar acá)
+├── scripts/
+│   └── sync-pympocket.mjs  # Copia ../PymPocket a ./pympocket
 ├── README.md           # Este archivo
 ├── .gitignore          # Archivos a ignorar en Git
 └── LICENSE             # Licencia del proyecto
 ```
+
+### PymPocket dentro del sitio
+
+PymPocket se desarrolla en su propia carpeta (`../PymPocket`) y se publica como parte de este sitio en `/pympocket/`. Antes de publicar, actualizá la copia:
+
+```bash
+npm run sync:pympocket
+```
+
+- **Ver demo** abre `pympocket/?demo=1`, que carga datos de ejemplo solo en el navegador del visitante (si no tiene datos propios).
+- Los datos de cada usuario quedan guardados según la dirección: una vez publicada, no conviene cambiar la ruta `/pympocket/`.
 
 ## 🚀 Cómo Usar
 

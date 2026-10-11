@@ -234,6 +234,204 @@ button:focus-visible {
 }
 
 /* ==========================================
+   PROJECTS SECTION
+   ========================================== */
+
+.projects {
+    padding: 4rem 2rem;
+    background: radial-gradient(circle at 85% 20%, rgba(139, 92, 246, 0.12), transparent 55%), var(--bg-page);
+}
+
+.projects h2 {
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-color);
+    font-weight: 700;
+}
+
+.section-subtitle {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    margin-bottom: 3rem;
+}
+
+.project-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: 3rem;
+    align-items: center;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: var(--shadow);
+}
+
+.project-brand {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.project-brand img {
+    border-radius: 14px;
+    flex: none;
+}
+
+.project-brand h3 {
+    font-size: 1.8rem;
+    color: var(--text-color);
+    line-height: 1.2;
+}
+
+.project-tagline {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.project-info > p {
+    color: var(--text-light);
+    margin-bottom: 1.25rem;
+}
+
+.project-features {
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+    margin-bottom: 1.5rem;
+}
+
+.project-features li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    color: var(--text-light);
+}
+
+.project-features i {
+    color: var(--primary-color);
+    width: 1.1rem;
+    text-align: center;
+    flex: none;
+}
+
+.project-tags {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.75rem;
+}
+
+.project-tags li {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-light);
+    background: var(--bg-surface-alt);
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.25rem 0.75rem;
+}
+
+.project-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.project-actions .cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 30px;
+    border: 1px solid var(--primary-color);
+    border-radius: 5px;
+    color: var(--text-color);
+    font-weight: bold;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.btn-outline:hover {
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.project-note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Captura de escritorio con el celular superpuesto */
+.project-media {
+    position: relative;
+    padding: 0 0 3rem 0;
+}
+
+.project-media img {
+    display: block;
+    height: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-hover);
+}
+
+.shot-desktop {
+    width: 100%;
+}
+
+.shot-phone {
+    position: absolute;
+    right: -1rem;
+    bottom: 0;
+    width: 30%;
+    border-radius: 20px !important;
+    border: 4px solid #2e2e2e !important;
+}
+
+.project-gallery {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 220px));
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.project-gallery figure {
+    margin: 0;
+    text-align: center;
+}
+
+.project-gallery img {
+    width: 100%;
+    height: auto;
+    border-radius: 18px;
+    border: 4px solid #2e2e2e;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.project-gallery figure:hover img {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.project-gallery figcaption {
+    margin-top: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* ==========================================
    ABOUT SECTION
    ========================================== */
 
@@ -429,9 +627,29 @@ button:focus-visible {
     }
 
     .services h2,
+    .projects h2,
     .about h2,
     .contact h2 {
         font-size: 2rem;
+    }
+
+    .project-card {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 1.5rem;
+    }
+
+    .project-media {
+        order: -1;
+    }
+
+    .shot-phone {
+        right: 0.5rem;
+    }
+
+    .project-gallery {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 1rem;
     }
 
     .services-grid {
@@ -475,9 +693,37 @@ button:focus-visible {
     }
 
     .services h2,
+    .projects h2,
     .about h2,
     .contact h2 {
         font-size: 1.5rem;
+    }
+
+    .projects {
+        padding: 3rem 1rem;
+    }
+
+    .projects .container {
+        padding: 0;
+    }
+
+    .project-card {
+        padding: 1.25rem;
+    }
+
+    .project-brand h3 {
+        font-size: 1.5rem;
+    }
+
+    .project-actions a {
+        flex: 1;
+        justify-content: center;
+        padding: 12px 16px;
+        white-space: nowrap;
+    }
+
+    .project-gallery figcaption {
+        font-size: 0.8rem;
     }
 
     .service-card {

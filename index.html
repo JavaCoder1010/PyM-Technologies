@@ -20,6 +20,7 @@
             </div>
             <ul class="nav-menu" id="navMenu">
                 <li><a href="#servicios" class="nav-link">Servicios</a></li>
+                <li><a href="#proyectos" class="nav-link">Proyectos</a></li>
                 <li><a href="#about" class="nav-link">Acerca de</a></li>
                 <li><a href="#contacto" class="nav-link">Contacto</a></li>
             </ul>
@@ -79,6 +80,73 @@
         </div>
     </section>
     
+    <!-- Projects Section -->
+    <section class="projects" id="proyectos">
+        <div class="container">
+            <h2>Proyectos</h2>
+            <p class="section-subtitle">Productos que diseñamos y desarrollamos de punta a punta.</p>
+
+            <article class="project-card" aria-labelledby="pympocket-title">
+                <div class="project-info">
+                    <div class="project-brand">
+                        <img src="pympocket/icons/icon.svg" alt="" width="56" height="56">
+                        <div>
+                            <h3 id="pympocket-title">PymPocket</h3>
+                            <p class="project-tagline">Control de gastos personales</p>
+                        </div>
+                    </div>
+                    <p>Una app para registrar gastos en segundos y entender en qué se va el dinero, pensada para cualquier persona y sin jerga financiera. Maneja pesos, dólares y euros con la cotización oficial del BCRA.</p>
+                    <ul class="project-features">
+                        <li><i class="fas fa-bolt" aria-hidden="true"></i> Carga de un gasto en pocos segundos</li>
+                        <li><i class="fas fa-chart-pie" aria-hidden="true"></i> Análisis por categoría con gráficos mensuales y anuales</li>
+                        <li><i class="fas fa-dollar-sign" aria-hidden="true"></i> Multimoneda con cotización oficial actualizada sola</li>
+                        <li><i class="fas fa-bullseye" aria-hidden="true"></i> Presupuestos con alertas, gastos fijos y metas de ahorro</li>
+                        <li><i class="fas fa-mobile-alt" aria-hidden="true"></i> Se instala en el celular y funciona sin conexión</li>
+                        <li><i class="fas fa-fingerprint" aria-hidden="true"></i> Cuenta sincronizada entre dispositivos, con ingreso por huella o rostro</li>
+                    </ul>
+                    <ul class="project-tags" aria-label="Tecnologías">
+                        <li>PWA</li>
+                        <li>JavaScript</li>
+                        <li>IndexedDB</li>
+                        <li>Offline first</li>
+                        <li>Supabase</li>
+                        <li>WebAuthn</li>
+                        <li>Accesible</li>
+                    </ul>
+                    <div class="project-actions">
+                        <a class="cta-button" href="pympocket/?demo=1#/inicio" target="_blank" rel="noopener">
+                            <i class="fas fa-play" aria-hidden="true"></i> Ver demo
+                        </a>
+                        <a class="btn-outline" href="pympocket/" target="_blank" rel="noopener">Crear cuenta</a>
+                    </div>
+                    <p class="project-note">La demo no necesita cuenta: carga datos de ejemplo solo en tu navegador.</p>
+                </div>
+
+                <div class="project-media">
+                    <img class="shot-desktop" src="img/pympocket/escritorio-analisis.webp" width="1600" height="1000" loading="lazy"
+                         alt="PymPocket en escritorio: gráfico de gastos e ingresos mes a mes y gasto por categoría">
+                    <img class="shot-phone" src="img/pympocket/movil-inicio.webp" width="600" height="1298" loading="lazy"
+                         alt="PymPocket en el celular: resumen del mes con gastos, ingresos y balance">
+                </div>
+            </article>
+
+            <div class="project-gallery">
+                <figure>
+                    <img src="img/pympocket/movil-carga.webp" width="600" height="1298" loading="lazy" alt="Formulario para cargar un gasto con monto, moneda y categoría">
+                    <figcaption>Carga en segundos</figcaption>
+                </figure>
+                <figure>
+                    <img src="img/pympocket/movil-inicio.webp" width="600" height="1298" loading="lazy" alt="Resumen del mes con balance y principales categorías">
+                    <figcaption>Resumen del mes</figcaption>
+                </figure>
+                <figure>
+                    <img src="img/pympocket/movil-analisis.webp" width="600" height="1298" loading="lazy" alt="Gráfico de anillo con el gasto por categoría y sus porcentajes">
+                    <figcaption>Gasto por categoría</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
     <!-- About Section -->
     <section class="about" id="about">
         <div class="container">
