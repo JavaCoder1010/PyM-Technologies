@@ -22,11 +22,11 @@ import {
   yearMonthly,
   yearsWithData,
 } from '../model.js';
-import { latestRate } from '../rates.js';
+import { converter } from '../rates.js';
 import { can, isPro, minMonth, FREE_HISTORY_MONTHS } from '../plan.js';
 import { onClick, toast } from '../ui.js';
 import { bars, columns, donut, legend, lines } from '../charts.js';
-import { catBadge, empty, icon, monthNav, pageHeader, proLock, rateNote } from './common.js';
+import { catBadge, conversionNote, empty, icon, monthNav, pageHeader, proLock } from './common.js';
 
 const thisYear = () => Number(todayISO().slice(0, 4));
 
@@ -72,7 +72,7 @@ function currencyTabs(list) {
           )
           .join('')}</div>`
       : '';
-  const rate = tab === 'ref' ? latestRate() : null;
+  const rate = tab === 'ref' ? converter() : null;
   return { html, currency: tab === 'ref' ? ref : tab, rate, isRef: tab === 'ref' };
 }
 
@@ -95,7 +95,7 @@ function renderMonth() {
   const b = categoryBreakdown(list, currency, { rate });
   return `${nav}${freeNote}${tabs.html}
     <div role="tabpanel">
-    ${isRef ? `<p class="note">${icon('info')} ${h(t('analysis.consolidatedNote'))} ${h(rateNote(rate))}</p>` : ''}
+    ${isRef ? `<p class="note">${icon('info')} ${h(t('analysis.consolidatedNote'))} ${h(conversionNote(rate))}</p>` : ''}
     ${summaryCard(b, currency)}
     ${b.total ? breakdownCard(b, currency, monthLabel(month)) : empty(t('analysis.noExpenses'))}
     ${b.total ? dailyCard(list, currency, rate) : ''}
@@ -319,7 +319,7 @@ function renderYear() {
 
   return `${nav}${tabs.html}
     <div role="tabpanel">
-    ${isRef ? `<p class="note">${icon('info')} ${h(t('analysis.consolidatedNote'))} ${h(rateNote(rate))}</p>` : ''}
+    ${isRef ? `<p class="note">${icon('info')} ${h(t('analysis.consolidatedNote'))} ${h(conversionNote(rate))}</p>` : ''}
     ${summaryCard(b, currency, extra)}
     ${monthByMonthCard(monthly, currency)}
     ${b.total ? categoriesByMonthCard(currency, rate) : ''}

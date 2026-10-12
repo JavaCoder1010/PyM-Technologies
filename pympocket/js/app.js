@@ -8,7 +8,7 @@ import { alive, housekeeping, importLegacy, load, subscribe, autoBackup, wipeLoc
 import { currentDatabase, deleteDatabase, useDatabase } from './db.js';
 import { deleteRemoteData, flush, onSyncStatus, startSync, syncNow } from './sync.js';
 import { disableBiometric, keepUnlocked, needsUnlock } from './lock.js';
-import { refreshRates, latestRate } from './rates.js';
+import { ensureRates, initRates, latestRate, refreshRates } from './rates.js';
 import { processRecurring } from './recurring.js';
 import { notifyIfDue } from './habits.js';
 import { formatDate, formatDateTime, formatDayMonth, money } from './format.js';
@@ -89,11 +89,21 @@ function render({ navigated = false } = {}) {
 function renderRateBadge() {
   const rate = latestRate();
   const badge = document.getElementById('rate-badge');
-  badge.innerHTML = rate
-    ? `<span class="sr-only">${h(t('rates.badgeLabel'))}</span>US$ 1 = ${h(money(rate.USD, 'ARS'))} <span class="muted">· ${h(formatDayMonth(rate.date))}</span>`
-    : '';
-  badge.title = rate ? t('rates.badgeTitle', { date: formatDate(rate.date) }) : '';
+  if (!rate) {
+    badge.innerHTML = '';
+    badge.title = '';
+    return;
+  }
+  const short = t(`rates.short.${rate.source}`);
+  badge.innerHTML = `<span class="sr-only">${h(t('rates.badgeLabel', { source: t(`rates.sources.${rate.source}`) }))}</span><span aria-hidden="true">US$ ${h(short)}</span> ${h(money(rate.USD, 'ARS'))} <span class="muted">· ${h(formatDayMonth(rate.date))}</span>`;
+  badge.title = t('rates.badgeTitle', { source: t(`rates.sources.${rate.source}`), date: formatDate(rate.date) });
 }
+
+/** Actualiza en segundo plano los historiales de cotización que hacen falta. */
+const updateRates = () =>
+  ensureRates()
+    .then((changed) => changed && scheduleRender())
+    .catch((err) => console.warn('No se pudieron actualizar las cotizaciones', err));
 
 function renderSyncBadge(status) {
   const badge = document.getElementById('sync-badge');
@@ -239,6 +249,7 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
       // Primera sincronización antes de mostrar (sin esperar más de unos segundos).
       if (navigator.onLine) await Promise.race([syncNow(), sleep(6000)]);
     }
+    await initRates();
     await housekeeping();
     if (demo && !alive('movements').length) await loadDemo();
   } catch (err) {
@@ -265,6 +276,7 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
   window.addEventListener('online', () => {
     updateOnlineStatus();
     refreshRates().catch(() => {});
+    updateRates();
   });
   window.addEventListener('offline', updateOnlineStatus);
   // Los gráficos se dibujan según el ancho de pantalla (por ejemplo, al girar el celular).
@@ -278,7 +290,10 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
 
   const created = await processRecurring();
   if (created) toast(t('recurring.autoCreated', { n: created }), { tone: 'success' });
-  refreshRates().catch((err) => console.warn('No se pudo actualizar la cotización', err));
+  refreshRates()
+    .then(() => scheduleRender())
+    .catch((err) => console.warn('No se pudo actualizar la cotización', err));
+  updateRates();
   autoBackup().catch((err) => console.warn('No se pudo crear la copia automática', err));
   navigator.storage?.persist?.();
 

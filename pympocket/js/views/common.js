@@ -60,14 +60,21 @@ export function proLock(feature) {
   </section>`;
 }
 
-/** "Cotización oficial BCRA del 09/10/2026: US$ 1 = $ 1.517,00 · € 1 = $ 1.698,74" */
+/** "Banco Nación (billete), último dato del 09/10/2026: US$ 1 = $ 1.535,00 · € 1 = $ 1.718,89." */
 export function rateNote(rate = latestRate()) {
   if (!rate) return t('rates.none');
   return t('rates.note', {
+    source: t(`rates.sources.${rate.source}`),
     date: formatDate(rate.date),
     usd: money(rate.USD, 'ARS'),
     eur: money(rate.EUR, 'ARS'),
   });
+}
+
+/** Nota para los totales convertidos: qué cotización se usó y su último valor. */
+export function conversionNote(conv) {
+  if (!conv) return t('rates.none');
+  return `${t('rates.perDate', { source: t(`rates.short.${conv.source}`) })} ${rateNote(latestRate(conv.source))}`;
 }
 
 export const currencyOptions = (selected, { includeNone = false } = {}) =>

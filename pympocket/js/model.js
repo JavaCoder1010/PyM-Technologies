@@ -3,7 +3,6 @@
 import { state, alive, byId } from './store.js';
 import { t } from './i18n.js';
 import { CURRENCIES, addDays, addMonths, monthRange, todayISO, currentMonth, parseISO, toISO } from './format.js';
-import { convert } from './rates.js';
 import { sum, norm } from './util.js';
 
 // ---------- Categorías ----------
@@ -99,11 +98,11 @@ export function totalsByCurrency(list) {
 /**
  * Gasto por categoría en una moneda. El porcentaje se calcula siempre sobre
  * el total de gastos; si hay ingresos, se agrega el porcentaje sobre ingresos.
- * Si se pasa `rate` y `currency` es la moneda de referencia, se consolidan
+ * Si se pasa `rate` (un conversor de rates.converter) y `currency` es la moneda de referencia, se consolidan
  * todas las monedas convirtiéndolas.
  */
 export function categoryBreakdown(list, currency, { rate = null } = {}) {
-  const value = (m) => (rate ? convert(m.amount, m.currency, currency, rate) : m.amount);
+  const value = (m) => (rate ? rate.at(m, currency) : m.amount);
   const relevant = rate ? list : list.filter((m) => m.currency === currency);
   const expenses = relevant.filter((m) => m.type === 'expense');
   const total = sum(expenses, value);
@@ -174,7 +173,7 @@ export function compareLists(curList, prevList, currency, { rate = null } = {}) 
 // ---------- Series para gráficos mensuales y anuales ----------
 // `rate` permite expresar todo en la moneda de referencia (consolidado).
 
-const valueIn = (currency, rate) => (m) => (rate ? convert(m.amount, m.currency, currency, rate) : m.currency === currency ? m.amount : 0);
+const valueIn = (currency, rate) => (m) => (rate ? rate.at(m, currency) : m.currency === currency ? m.amount : 0);
 
 export const yearRange = (year) => [`${year}-01-01`, `${year}-12-31`];
 export const inYear = (year, type) => inRange(...yearRange(year), type);
@@ -241,7 +240,7 @@ export function consolidated(list, ref, rate) {
   let expense = 0;
   let income = 0;
   for (const m of list) {
-    const v = convert(m.amount, m.currency, ref, rate);
+    const v = rate.at(m, ref);
     if (m.type === 'expense') expense += v;
     else income += v;
   }

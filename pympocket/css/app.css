@@ -607,3 +607,12 @@ body.locked { overflow: hidden; }
 .segmented-wrap button { display: inline-flex; align-items: center; gap: 6px; }
 .auth-lang { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--muted); font-size: 0.9rem; }
 .auth-lang select { width: auto; min-height: 36px; padding: 4px 8px; font-size: 0.9rem; }
+
+/* ---------- Cotizaciones ---------- */
+
+.rate-list { list-style: none; display: grid; gap: 2px; margin-bottom: 8px; }
+.rate-list li { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; padding: 8px 10px; border-radius: var(--radius-sm); }
+.rate-list li .small { grid-column: 1 / -1; }
+.rate-list li.is-active { background: var(--accent-soft); }
+.rate-list strong { font-variant-numeric: tabular-nums; text-align: right; }
+@media (min-width: 640px) { .rate-list li { grid-template-columns: 1fr auto 110px; } .rate-list li .small { grid-column: auto; text-align: right; } }

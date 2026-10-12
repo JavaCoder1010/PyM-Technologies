@@ -8,14 +8,14 @@ import { currentUser, updatePassword } from '../auth.js';
 import { syncStatus } from '../sync.js';
 import { biometricAvailable, biometricEnabled, disableBiometric } from '../lock.js';
 import { authErrorText } from './auth.js';
-import { formatDate, formatDateTime, todayISO } from '../format.js';
-import { latestRate, refreshRates } from '../rates.js';
+import { formatDate, formatDateTime, money, todayISO } from '../format.js';
+import { SOURCES, activeSource, ensureRates, isProSource, latestRate, refreshRates, sourceAllowed } from '../rates.js';
 import { can, isPro, FREE_HISTORY_MONTHS } from '../plan.js';
 import { requestNotifications } from '../habits.js';
 import { analyzeImport, movementsCSV } from '../csv.js';
 import { processRecurring } from '../recurring.js';
 import { closeDialog, confirmDialog, download, onChange, onClick, onSubmit, openDialog, pickTextFile, toast } from '../ui.js';
-import { currencyOptions, icon, pageHeader, rateNote } from './common.js';
+import { currencyOptions, icon, pageHeader } from './common.js';
 
 let backups = [];
 let canBiometric = false;
@@ -55,7 +55,21 @@ export function render() {
       <p class="muted small">${h(t('more.currencyHint'))}</p>
       <label class="inline-field">${h(t('more.refCurrency'))}
         <select data-change="ref-currency">${currencyOptions(s.refCurrency, { includeNone: true })}</select></label>
-      <p class="small">${h(rateNote())}</p>
+      <label class="inline-field">${h(t('rates.sourceLabel'))}
+        <select data-change="rate-source">${SOURCES.map(
+          (src) => `<option value="${src}" ${src === activeSource() ? 'selected' : ''} ${sourceAllowed(src) ? '' : 'disabled'}>${h(t(`rates.sources.${src}`))}${isProSource(src) && !sourceAllowed(src) ? ' (Pro)' : ''}</option>`,
+        ).join('')}</select></label>
+      <p class="muted small">${h(t('rates.sourceHint'))}</p>
+      <h3>${h(t('rates.today'))}</h3>
+      <ul class="rate-list">${SOURCES.map((src) => {
+        const r = latestRate(src);
+        return `<li class="${src === activeSource() ? 'is-active' : ''}">
+          <span>${h(t(`rates.sources.${src}`))}${isProSource(src) && !isPro() ? ` <span class="pro-badge">${h(t('plan.proBadge'))}</span>` : ''}</span>
+          <strong>${r ? h(money(r.USD, 'ARS')) : `<span class="muted">${h(t('rates.unavailable'))}</span>`}</strong>
+          <span class="muted small">${r ? h(formatDate(r.date)) : ''}</span>
+        </li>`;
+      }).join('')}</ul>
+      <p class="muted small">${h(t('rates.credits'))}</p>
       <button type="button" class="btn btn-ghost btn-small" data-action="refresh-rates">${icon('repeat')} ${h(t('rates.refresh'))}</button>
     </section>
 
@@ -107,11 +121,18 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.1.1 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.2.0 · PyM Technologies</p>`;
 }
+
+let ratesRequested = false;
 
 export function bind(root, refresh) {
   rerender = refresh;
+  // Las cotizaciones de hoy de todas las fuentes, una vez por sesión.
+  if (!ratesRequested) {
+    ratesRequested = true;
+    ensureRates(SOURCES).then((changed) => changed && refresh());
+  }
   biometricAvailable().then((ok) => {
     if (ok !== canBiometric) {
       canBiometric = ok;
@@ -127,7 +148,16 @@ export function bind(root, refresh) {
   if (anchor) root.querySelector(`#${CSS.escape(anchor)}`)?.scrollIntoView({ block: 'start' });
 }
 
-onChange({ 'ref-currency': (el) => setSetting('refCurrency', el.value || null) });
+onChange({
+  'ref-currency': async (el) => {
+    await setSetting('refCurrency', el.value || null);
+    if (el.value) ensureRates().then((changed) => changed && rerender());
+  },
+  'rate-source': async (el) => {
+    await setSetting('rateSource', el.value);
+    ensureRates([el.value]).then((changed) => changed && rerender());
+  },
+});
 
 onSubmit({
   reminders: async (data) => {
@@ -158,8 +188,12 @@ onClick({
     toast(t(isPro() ? 'plan.proOn' : 'plan.proOff'), { tone: 'success' });
   },
   'refresh-rates': async () => {
+    if (!navigator.onLine) return toast(t('rates.offline'));
     try {
-      const rate = await refreshRates({ force: true });
+      await refreshRates({ force: true });
+      await ensureRates(SOURCES, { force: true });
+      rerender();
+      const rate = latestRate();
       toast(rate ? t('rates.updated', { date: formatDate(rate.date) }) : t('rates.offline'));
     } catch {
       toast(t('rates.error'), { tone: 'danger' });

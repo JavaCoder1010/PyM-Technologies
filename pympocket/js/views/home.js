@@ -4,13 +4,13 @@ import { h } from '../util.js';
 import { state, alive, byId, setSetting } from '../store.js';
 import { currentMonth, formatDate, formatDateLong, money, monthLabel, percent, todayISO } from '../format.js';
 import { budgetLabel, budgetStatuses, categoryBreakdown, catName, consolidated, currenciesIn, inMonth, insights, sortByDateDesc } from '../model.js';
-import { latestRate } from '../rates.js';
+import { converter } from '../rates.js';
 import { can } from '../plan.js';
 import { pendingConfirmations, resolvePending, upcoming } from '../recurring.js';
 import { pendingSummary, reminderDue } from '../habits.js';
 import { onClick, toast } from '../ui.js';
 import { progress } from '../charts.js';
-import { catBadge, empty, icon, movementRow, rateNote } from './common.js';
+import { catBadge, conversionNote, empty, icon, movementRow } from './common.js';
 
 export const title = () => t('nav.home');
 
@@ -84,12 +84,12 @@ function monthSummary(month) {
 
 function consolidatedLine(month, currencies) {
   const ref = state.settings.refCurrency;
-  const rate = latestRate();
+  const rate = ref ? converter() : null;
   if (!ref || !rate || (currencies.length === 1 && currencies[0] === ref)) return '';
   const c = consolidated(month, ref, rate);
   return `<div class="consolidated">
     <p><strong>${h(t('home.consolidated', { currency: ref }))}:</strong> ${h(money(c.expense, ref))} ${h(t('home.inExpenses'))}</p>
-    <p class="muted small">${h(rateNote(rate))}</p>
+    <p class="muted small">${h(conversionNote(rate))}</p>
   </div>`;
 }
 

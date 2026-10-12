@@ -3,7 +3,7 @@
 // así nunca se mezclan datos de distintas cuentas en el mismo navegador.
 
 export const LEGACY_DB = 'pympocket'; // base anterior al login
-const VERSION = 2;
+const VERSION = 3;
 
 /** Almacenes y su clave primaria. */
 export const STORES = {
@@ -16,6 +16,7 @@ export const STORES = {
   rates: 'date',
   backups: 'id',
   meta: 'key', // estado de la sincronización
+  rateSeries: 'id', // historiales de cotizaciones (ver rates.js)
 };
 
 let dbName = null;
