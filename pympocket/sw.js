@@ -1,6 +1,6 @@
 // Service worker: guarda la app para que abra y funcione sin conexión.
 // Al publicar cambios, subir VERSION para que los usuarios reciban la nueva versión.
-const VERSION = 'pympocket-v2.2.0';
+const VERSION = 'pympocket-v2.2.1';
 
 const APP_SHELL = [
   './',

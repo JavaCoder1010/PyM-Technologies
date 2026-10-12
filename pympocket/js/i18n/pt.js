@@ -360,7 +360,7 @@ export default {
     sourceHint: 'É usado o valor de venda. Cada movimentação é convertida com a cotação da sua data (ou do último dia útil anterior).',
     today: 'Cotações do dólar',
     unavailable: 'sem dados',
-    credits: 'Fontes: BCRA (oficial) e ArgentinaDatos (Banco Nación, MEP e blue).',
+    credits: 'Fontes: BCRA (oficial), ArgentinaDatos e DolarApi (Banco Nación, MEP e blue).',
   },
 
   reminders: {

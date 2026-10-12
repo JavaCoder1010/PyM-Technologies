@@ -360,7 +360,7 @@ export default {
     sourceHint: 'The selling rate is used. Each transaction is converted with the rate of its date (or the previous business day).',
     today: 'Dollar exchange rates',
     unavailable: 'no data',
-    credits: 'Sources: BCRA (official) and ArgentinaDatos (Banco Nación, MEP and blue).',
+    credits: 'Sources: BCRA (official), ArgentinaDatos and DolarApi (Banco Nación, MEP and blue).',
   },
 
   reminders: {

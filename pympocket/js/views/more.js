@@ -121,7 +121,7 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.2.0 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.2.1 · PyM Technologies</p>`;
 }
 
 let ratesRequested = false;

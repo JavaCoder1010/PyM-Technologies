@@ -11,6 +11,11 @@
 // dispositivo para usarlos sin conexión y después solo se actualizan.
 // El euro: con BCRA se usa su cotización en pesos; con las demás fuentes se
 // calcula con el dólar elegido y la relación euro/dólar del BCRA de esa fecha.
+//
+// ArgentinaDatos a veces registra los días más recientes con la fecha del día
+// siguiente (el valor del cierre del viernes aparece como del sábado, etc.).
+// Ver correctRecent: se detecta comparando su mayorista con el del BCRA y se
+// corrige, y el último valor se toma de DolarApi, que trae la hora exacta.
 import * as db from './db.js';
 import { state, saveRate, alive } from './store.js';
 import { isPro } from './plan.js';
@@ -18,6 +23,7 @@ import { addDays, todayISO } from './format.js';
 
 const BCRA_API = 'https://api.bcra.gob.ar/estadisticascambiarias/v1.0/Cotizaciones';
 const AD_API = 'https://api.argentinadatos.com/v1/cotizaciones/dolares';
+const DOLARAPI = 'https://dolarapi.com/v1/dolares';
 const MAX_AGE_MS = 6 * 3600 * 1000;
 
 export const SOURCES = ['bcra', 'bna', 'mep', 'blue'];
@@ -120,12 +126,78 @@ async function ensureArgentinaDatos(source, force = false) {
   const res = await fetch(`${AD_API}/${AD_CASA[source]}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`ArgentinaDatos ${res.status}`);
   const rows = await res.json();
-  const points = rows
+  let points = rows
     .filter((r) => Number(r.venta) > 0)
     .map((r) => [r.fecha, Number(r.venta)])
     .sort((x, y) => x[0].localeCompare(y[0]));
+  try {
+    points = await correctRecent(source, points);
+  } catch (err) {
+    console.warn('No se pudieron corregir las fechas recientes', err);
+  }
   await saveSeries(source, points);
   return true;
+}
+
+// ---------- Corrección de fechas recientes de ArgentinaDatos ----------
+
+const nearly = (a, b) => a != null && b != null && Math.abs(a - b) < 0.005;
+/** Fecha (AAAA-MM-DD) en Argentina de un momento dado. */
+const argentinaDate = (iso) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' }).format(new Date(iso));
+
+let lagPromise = null;
+
+/**
+ * Detecta si los días recientes de ArgentinaDatos están corridos un día,
+ * comparando su mayorista con el del BCRA en las últimas semanas.
+ * Devuelve { lastGood, businessDays } con el último día bien fechado y los
+ * días hábiles posteriores (corridos), o null si no hay corrimiento claro.
+ */
+function detectLag() {
+  lagPromise ??= (async () => {
+    const from = addDays(todayISO(), -40);
+    const bcra = (await fetchBcra('USD', from, todayISO())).map((p) => [p[0], p[1]]).sort((x, y) => x[0].localeCompare(y[0]));
+    const res = await fetch(`${AD_API}/mayorista`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`ArgentinaDatos ${res.status}`);
+    const mayorista = new Map((await res.json()).filter((r) => r.fecha >= from).map((r) => [r.fecha, Number(r.venta)]));
+    // Del día hábil más reciente hacia atrás, el último que coincide en la misma fecha.
+    for (let i = bcra.length - 1; i >= 0; i--) {
+      if (!nearly(mayorista.get(bcra[i][0]), bcra[i][1])) continue;
+      const later = bcra.slice(i + 1);
+      if (!later.length) return null; // los datos más recientes están bien fechados
+      // Todos los días posteriores tienen que mostrar el valor del día hábil anterior.
+      const shifted = later.every(([day], j) => nearly(mayorista.get(day), (j === 0 ? bcra[i] : later[j - 1])[1]));
+      return shifted ? { lastGood: bcra[i][0], businessDays: later.map(([day]) => day) } : null;
+    }
+    return null;
+  })().catch((err) => {
+    console.warn('No se pudo comparar ArgentinaDatos con el BCRA', err);
+    return null;
+  });
+  return lagPromise;
+}
+
+/**
+ * Corrige el final del historial: si está corrido, cada día hábil toma el valor
+ * que ArgentinaDatos registró al día siguiente; después, el último valor y su
+ * fecha real se toman de DolarApi.
+ */
+async function correctRecent(source, points) {
+  const lag = await detectLag();
+  if (lag) {
+    const byDate = new Map(points.map((p) => [p[0], p[1]]));
+    const fixed = lag.businessDays.map((day) => [day, byDate.get(addDays(day, 1))]).filter((p) => p[1] > 0);
+    points = [...points.filter((p) => p[0] <= lag.lastGood), ...fixed];
+  }
+  const res = await fetch(`${DOLARAPI}/${AD_CASA[source]}`, { cache: 'no-store' });
+  if (res.ok) {
+    const latest = await res.json();
+    if (Number(latest.venta) > 0 && latest.fechaActualizacion) {
+      const day = argentinaDate(latest.fechaActualizacion);
+      points = [...points.filter((p) => p[0] !== day), [day, Number(latest.venta)]];
+    }
+  }
+  return points.sort((x, y) => x[0].localeCompare(y[0]));
 }
 
 /** Fecha del movimiento más antiguo (desde ahí hace falta el historial). */
@@ -137,6 +209,7 @@ const firstMovementDate = () => alive('movements').reduce((min, m) => (m.date < 
  */
 export async function ensureRates(sources = [activeSource()], { force = false } = {}) {
   if (!navigator.onLine) return false;
+  if (force) lagPromise = null;
   const from = addDays(firstMovementDate(), -10); // margen para fines de semana y feriados
   const jobs = [ensureBcra('EUR', from, force)]; // la relación euro/dólar se usa con todas las fuentes
   for (const s of new Set(sources)) jobs.push(s === 'bcra' ? ensureBcra('USD', from, force) : ensureArgentinaDatos(s, force));
