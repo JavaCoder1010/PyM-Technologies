@@ -183,13 +183,14 @@ export default {
   },
 
   analysis: {
+    convertWith: 'Converter tudo com',
+    noConversion: 'Sem converter',
     title: 'Análise de gastos',
     pdf: 'Baixar PDF',
     freeHistory: 'O plano gratuito inclui os últimos {months} meses.',
     empty: 'Nenhuma movimentação neste mês',
     emptyHint: 'Quando você registrar gastos, verá aqui em quais categorias vai o seu dinheiro.',
     currency: 'Moeda',
-    consolidatedTab: 'Tudo em {currency}',
     consolidatedNote: 'Valores convertidos para uma única moeda.',
     summary: 'Resumo',
     totalExpenses: 'Total gasto',
@@ -345,6 +346,8 @@ export default {
   },
 
   rates: {
+    downloading: 'Baixando a cotação {source}…',
+    whereToConvert: 'Para ver todas as suas movimentações convertidas para uma única moeda, escolha a cotação em Análise.',
     none: 'Ainda não há cotação. Ela é baixada sozinha quando você estiver conectado.',
     note: '{source}, último dado de {date}: US$ 1 = {usd} · € 1 = {eur}.',
     perDate: 'Cada movimentação é convertida com a cotação {source} da sua data.',
@@ -356,8 +359,6 @@ export default {
     badgeTitle: '{source}, cotação de {date}',
     sources: { bcra: 'Oficial BCRA (atacado)', bna: 'Banco Nación (papel-moeda)', mep: 'Dólar MEP', blue: 'Dólar blue' },
     short: { bcra: 'BCRA', bna: 'BNA', mep: 'MEP', blue: 'Blue' },
-    sourceLabel: 'Cotação para converter',
-    sourceHint: 'É usado o valor de venda. Cada movimentação é convertida com a cotação da sua data (ou do último dia útil anterior).',
     today: 'Cotações do dólar',
     unavailable: 'sem dados',
     credits: 'Fontes: BCRA (oficial), ArgentinaDatos e DolarApi (Banco Nación, MEP e blue).',
@@ -433,9 +434,6 @@ export default {
   more: {
     title: 'Mais opções',
     manage: 'Gerenciar',
-    currencyTitle: 'Moeda de referência',
-    currencyHint: 'Os totais são mostrados por moeda, sem misturar. Se você escolher uma moeda de referência, também verá um total com tudo convertido.',
-    refCurrency: 'Moeda de referência',
     version: 'versão',
   },
 

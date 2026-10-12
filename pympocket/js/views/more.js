@@ -9,13 +9,13 @@ import { syncStatus } from '../sync.js';
 import { biometricAvailable, biometricEnabled, disableBiometric } from '../lock.js';
 import { authErrorText } from './auth.js';
 import { formatDate, formatDateTime, money, todayISO } from '../format.js';
-import { SOURCES, activeSource, ensureRates, isProSource, latestRate, refreshRates, sourceAllowed } from '../rates.js';
+import { SOURCES, activeSource, ensureRates, isProSource, latestRate, refreshRates } from '../rates.js';
 import { can, isPro, FREE_HISTORY_MONTHS } from '../plan.js';
 import { requestNotifications } from '../habits.js';
 import { analyzeImport, movementsCSV } from '../csv.js';
 import { processRecurring } from '../recurring.js';
-import { closeDialog, confirmDialog, download, onChange, onClick, onSubmit, openDialog, pickTextFile, toast } from '../ui.js';
-import { currencyOptions, icon, pageHeader } from './common.js';
+import { closeDialog, confirmDialog, download, onClick, onSubmit, openDialog, pickTextFile, toast } from '../ui.js';
+import { icon, pageHeader } from './common.js';
 
 let backups = [];
 let canBiometric = false;
@@ -51,19 +51,11 @@ export function render() {
     </section>
 
     <section class="card" id="moneda" aria-labelledby="more-currency">
-      <h2 id="more-currency">${h(t('more.currencyTitle'))}</h2>
-      <p class="muted small">${h(t('more.currencyHint'))}</p>
-      <label class="inline-field">${h(t('more.refCurrency'))}
-        <select data-change="ref-currency">${currencyOptions(s.refCurrency, { includeNone: true })}</select></label>
-      <label class="inline-field">${h(t('rates.sourceLabel'))}
-        <select data-change="rate-source">${SOURCES.map(
-          (src) => `<option value="${src}" ${src === activeSource() ? 'selected' : ''} ${sourceAllowed(src) ? '' : 'disabled'}>${h(t(`rates.sources.${src}`))}${isProSource(src) && !sourceAllowed(src) ? ' (Pro)' : ''}</option>`,
-        ).join('')}</select></label>
-      <p class="muted small">${h(t('rates.sourceHint'))}</p>
-      <h3>${h(t('rates.today'))}</h3>
+      <h2 id="more-currency">${h(t('rates.today'))}</h2>
+      <p class="muted small">${h(t('rates.whereToConvert'))} <a class="link" href="#/analisis">${h(t('home.seeAnalysis'))}</a></p>
       <ul class="rate-list">${SOURCES.map((src) => {
         const r = latestRate(src);
-        return `<li class="${src === activeSource() ? 'is-active' : ''}">
+        return `<li class="${state.settings.refCurrency && src === activeSource() ? 'is-active' : ''}">
           <span>${h(t(`rates.sources.${src}`))}${isProSource(src) && !isPro() ? ` <span class="pro-badge">${h(t('plan.proBadge'))}</span>` : ''}</span>
           <strong>${r ? h(money(r.USD, 'ARS')) : `<span class="muted">${h(t('rates.unavailable'))}</span>`}</strong>
           <span class="muted small">${r ? h(formatDate(r.date)) : ''}</span>
@@ -121,7 +113,7 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.2.1 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.3.0 · PyM Technologies</p>`;
 }
 
 let ratesRequested = false;
@@ -148,16 +140,6 @@ export function bind(root, refresh) {
   if (anchor) root.querySelector(`#${CSS.escape(anchor)}`)?.scrollIntoView({ block: 'start' });
 }
 
-onChange({
-  'ref-currency': async (el) => {
-    await setSetting('refCurrency', el.value || null);
-    if (el.value) ensureRates().then((changed) => changed && rerender());
-  },
-  'rate-source': async (el) => {
-    await setSetting('rateSource', el.value);
-    ensureRates([el.value]).then((changed) => changed && rerender());
-  },
-});
 
 onSubmit({
   reminders: async (data) => {

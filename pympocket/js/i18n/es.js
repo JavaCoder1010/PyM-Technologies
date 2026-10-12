@@ -183,13 +183,14 @@ export default {
   },
 
   analysis: {
+    convertWith: 'Convertir todo con',
+    noConversion: 'Sin convertir',
     title: 'Análisis de gastos',
     pdf: 'Descargar PDF',
     freeHistory: 'El plan gratuito incluye los últimos {months} meses.',
     empty: 'Sin movimientos en este mes',
     emptyHint: 'Cuando cargues gastos vas a ver acá en qué categorías se va tu dinero.',
     currency: 'Moneda',
-    consolidatedTab: 'Todo en {currency}',
     consolidatedNote: 'Montos convertidos a una sola moneda.',
     summary: 'Resumen',
     totalExpenses: 'Total gastado',
@@ -345,6 +346,8 @@ export default {
   },
 
   rates: {
+    downloading: 'Descargando la cotización {source}…',
+    whereToConvert: 'Para ver todos tus movimientos convertidos a una sola moneda, elegí la cotización en Análisis.',
     none: 'Todavía no hay cotización. Se descarga sola cuando tengas conexión.',
     note: '{source}, último dato del {date}: US$ 1 = {usd} · € 1 = {eur}.',
     perDate: 'Cada movimiento se convierte con la cotización {source} de su fecha.',
@@ -356,8 +359,6 @@ export default {
     badgeTitle: '{source}, cotización del {date}',
     sources: { bcra: 'Oficial BCRA (mayorista)', bna: 'Banco Nación (billete)', mep: 'Dólar MEP', blue: 'Dólar blue' },
     short: { bcra: 'BCRA', bna: 'BNA', mep: 'MEP', blue: 'Blue' },
-    sourceLabel: 'Cotización para convertir',
-    sourceHint: 'Se usa el valor de venta. Cada movimiento se convierte con la cotización de su fecha (o del último día hábil anterior).',
     today: 'Cotizaciones del dólar',
     unavailable: 'sin datos',
     credits: 'Fuentes: BCRA (oficial), ArgentinaDatos y DolarApi (Banco Nación, MEP y blue).',
@@ -433,9 +434,6 @@ export default {
   more: {
     title: 'Más opciones',
     manage: 'Administrar',
-    currencyTitle: 'Moneda de referencia',
-    currencyHint: 'Los totales se muestran por moneda, sin mezclar. Si elegís una moneda de referencia, también vas a ver un total con todo convertido.',
-    refCurrency: 'Moneda de referencia',
     version: 'versión',
   },
 

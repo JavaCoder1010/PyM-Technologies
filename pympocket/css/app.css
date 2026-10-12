@@ -616,3 +616,14 @@ body.locked { overflow: hidden; }
 .rate-list li.is-active { background: var(--accent-soft); }
 .rate-list strong { font-variant-numeric: tabular-nums; text-align: right; }
 @media (min-width: 640px) { .rate-list li { grid-template-columns: 1fr auto 110px; } .rate-list li .small { grid-column: auto; text-align: right; } }
+
+/* ---------- Análisis: moneda y cotización ---------- */
+
+.analysis-controls { display: grid; gap: 10px; }
+.control-row { display: grid; gap: 6px; }
+.control-label { font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.analysis-controls .segmented-wrap button { min-height: 36px; padding: 6px 12px; font-size: 0.9rem; }
+@media (min-width: 700px) {
+  .control-row { grid-template-columns: 150px 1fr; align-items: center; }
+}
+@media print { .analysis-controls { display: none !important; } }

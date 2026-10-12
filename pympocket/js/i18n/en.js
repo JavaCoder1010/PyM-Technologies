@@ -183,13 +183,14 @@ export default {
   },
 
   analysis: {
+    convertWith: 'Convert everything with',
+    noConversion: 'No conversion',
     title: 'Spending analysis',
     pdf: 'Download PDF',
     freeHistory: 'The free plan includes the last {months} months.',
     empty: 'No transactions this month',
     emptyHint: "Once you add expenses, you'll see here which categories your money goes to.",
     currency: 'Currency',
-    consolidatedTab: 'All in {currency}',
     consolidatedNote: 'Amounts converted to a single currency.',
     summary: 'Summary',
     totalExpenses: 'Total spent',
@@ -345,6 +346,8 @@ export default {
   },
 
   rates: {
+    downloading: 'Downloading the {source} rate…',
+    whereToConvert: 'To see all your transactions converted to a single currency, choose the rate in Analysis.',
     none: "No exchange rate yet. It downloads automatically when you're online.",
     note: '{source}, latest data from {date}: US$ 1 = {usd} · € 1 = {eur}.',
     perDate: 'Each transaction is converted with the {source} rate of its date.',
@@ -356,8 +359,6 @@ export default {
     badgeTitle: '{source}, rate for {date}',
     sources: { bcra: 'Official BCRA (wholesale)', bna: 'Banco Nación (cash)', mep: 'MEP dollar', blue: 'Blue dollar' },
     short: { bcra: 'BCRA', bna: 'BNA', mep: 'MEP', blue: 'Blue' },
-    sourceLabel: 'Rate used for conversions',
-    sourceHint: 'The selling rate is used. Each transaction is converted with the rate of its date (or the previous business day).',
     today: 'Dollar exchange rates',
     unavailable: 'no data',
     credits: 'Sources: BCRA (official), ArgentinaDatos and DolarApi (Banco Nación, MEP and blue).',
@@ -433,9 +434,6 @@ export default {
   more: {
     title: 'More options',
     manage: 'Manage',
-    currencyTitle: 'Reference currency',
-    currencyHint: "Totals are shown per currency, never mixed. If you choose a reference currency, you'll also see a total with everything converted.",
-    refCurrency: 'Reference currency',
     version: 'version',
   },
 

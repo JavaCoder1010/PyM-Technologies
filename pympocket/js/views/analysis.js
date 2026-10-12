@@ -3,8 +3,8 @@
 // comparaciones y gastos más altos.
 import { t } from '../i18n.js';
 import { h, sum } from '../util.js';
-import { state, byId } from '../store.js';
-import { addMonths, currentMonth, formatDate, formatDayMonth, money, moneyShort, monthLabel, percent, todayISO } from '../format.js';
+import { state, byId, setSetting } from '../store.js';
+import { CURRENCIES, addMonths, currentMonth, formatDate, formatDayMonth, money, moneyShort, monthLabel, percent, todayISO } from '../format.js';
 import {
   catName,
   categoriesByMonth,
@@ -22,7 +22,7 @@ import {
   yearMonthly,
   yearsWithData,
 } from '../model.js';
-import { converter } from '../rates.js';
+import { SOURCES, activeSource, converter, ensureRates, latestRate, sourceAllowed } from '../rates.js';
 import { can, isPro, minMonth, FREE_HISTORY_MONTHS } from '../plan.js';
 import { onClick, toast } from '../ui.js';
 import { bars, columns, donut, legend, lines } from '../charts.js';
@@ -33,7 +33,7 @@ const thisYear = () => Number(todayISO().slice(0, 4));
 let mode = 'month'; // 'month' | 'year'
 let month = currentMonth();
 let year = thisYear();
-let tab = null; // moneda elegida o 'ref' para el consolidado
+let viewCurrency = null; // moneda que se está mirando (o a la que se convierte)
 let evolutionMonths = 6;
 let rerender = () => {};
 
@@ -56,25 +56,49 @@ export function render() {
   return header + switcher + (mode === 'year' ? renderYear() : renderMonth());
 }
 
-/** Pestañas de moneda (y "Todo en …" si hay moneda de referencia). */
-function currencyTabs(list) {
-  const currencies = currenciesIn(list);
+/**
+ * Botones de moneda y de cotización. "Sin convertir" muestra solo los
+ * movimientos de esa moneda; con una cotización se convierte todo a esa
+ * moneda (cada movimiento con la cotización de su fecha). La elección se guarda
+ * como moneda de referencia, así Inicio muestra el mismo total convertido.
+ */
+function currencyControls(list) {
   const ref = state.settings.refCurrency;
-  const tabs = [...currencies];
-  if (ref && currencies.length) tabs.push('ref');
-  if (!tabs.includes(tab)) tab = tabs[0] ?? null;
-  const html =
-    tabs.length > 1
-      ? `<div class="tabs" role="tablist" aria-label="${h(t('analysis.currency'))}">${tabs
-          .map(
-            (c) => `<button type="button" role="tab" aria-selected="${c === tab}" data-action="analysis-tab" data-tab="${c}">
-              ${h(c === 'ref' ? t('analysis.consolidatedTab', { currency: ref }) : t(`currencies.${c}`))}</button>`,
-          )
-          .join('')}</div>`
-      : '';
-  const rate = tab === 'ref' ? converter() : null;
-  return { html, currency: tab === 'ref' ? ref : tab, rate, isRef: tab === 'ref' };
+  const quote = ref ? activeSource() : null;
+  if (quote) viewCurrency = ref;
+  else if (!CURRENCIES.includes(viewCurrency)) viewCurrency = currenciesIn(list)[0] ?? 'ARS';
+
+  const currencyButtons = CURRENCIES.map(
+    (c) => `<button type="button" data-action="analysis-currency" data-currency="${c}" aria-pressed="${c === viewCurrency}">${h(t(`currencies.${c}`))}</button>`,
+  ).join('');
+  const quoteButtons = [null, ...SOURCES].map((src) => {
+    const locked = src && !sourceAllowed(src);
+    const label = src ? t(`rates.short.${src}`) : t('analysis.noConversion');
+    return `<button type="button" data-action="analysis-quote" data-quote="${src ?? ''}" aria-pressed="${src === quote}" ${src ? `title="${h(t(`rates.sources.${src}`))}"` : ''}>
+      ${h(label)}${locked ? ` <span class="pro-badge">${h(t('plan.proBadge'))}</span>` : ''}</button>`;
+  }).join('');
+
+  const html = `<div class="analysis-controls">
+    <div class="control-row" role="group" aria-labelledby="ctl-currency">
+      <span class="control-label" id="ctl-currency">${h(t('analysis.currency'))}</span>
+      <div class="segmented segmented-wrap">${currencyButtons}</div>
+    </div>
+    <div class="control-row" role="group" aria-labelledby="ctl-quote">
+      <span class="control-label" id="ctl-quote">${h(t('analysis.convertWith'))}</span>
+      <div class="segmented segmented-wrap">${quoteButtons}</div>
+    </div>
+  </div>`;
+
+  // Si esa cotización todavía no se descargó, se pide y se avisa mientras tanto.
+  const loading = quote && !latestRate(quote);
+  if (loading && navigator.onLine) ensureRates([quote]).then(() => rerender());
+  const rate = quote && !loading ? converter(quote) : null;
+  return { html, currency: viewCurrency, rate, isRef: Boolean(quote), loading, quote };
 }
+
+/** Aviso cuando se eligió convertir pero todavía no hay cotización. */
+const ratePending = (ctl) =>
+  `<section class="card">${h(ctl.loading && navigator.onLine ? t('rates.downloading', { source: t(`rates.sources.${ctl.quote}`) }) : t('rates.none'))}</section>`;
 
 const noData = (text) =>
   empty(text, t('analysis.emptyHint'), `<button type="button" class="btn btn-primary" data-action="new-movement">${icon('plus')} ${h(t('home.firstExpense'))}</button>`);
@@ -87,9 +111,9 @@ function renderMonth() {
   const list = inMonth(month);
   const nav = monthNav(month, { action: 'analysis-month', min: floor, max: currentMonth() });
   const freeNote = !isPro() ? `<p class="muted small center">${h(t('analysis.freeHistory', { months: FREE_HISTORY_MONTHS }))}</p>` : '';
-  const tabs = currencyTabs(list);
-  if (!tab) return `${nav}${freeNote}${noData(t('analysis.empty'))}`;
-  if (tabs.isRef && !tabs.rate) return `${nav}${tabs.html}<section class="card">${h(t('rates.none'))}</section>`;
+  if (!list.length) return `${nav}${freeNote}${noData(t('analysis.empty'))}`;
+  const tabs = currencyControls(list);
+  if (tabs.isRef && !tabs.rate) return `${nav}${tabs.html}${ratePending(tabs)}`;
 
   const { currency, rate, isRef } = tabs;
   const b = categoryBreakdown(list, currency, { rate });
@@ -295,9 +319,9 @@ function renderYear() {
     <button type="button" class="btn-icon" data-action="analysis-year" data-step="1" ${year >= thisYear() ? 'disabled' : ''} aria-label="${h(t('analysis.nextYear'))}">${icon('chevron-right')}</button>
   </nav>`;
   const list = inYear(year);
-  const tabs = currencyTabs(list);
-  if (!tab) return `${nav}${noData(t('analysis.emptyYear'))}`;
-  if (tabs.isRef && !tabs.rate) return `${nav}${tabs.html}<section class="card">${h(t('rates.none'))}</section>`;
+  if (!list.length) return `${nav}${noData(t('analysis.emptyYear'))}`;
+  const tabs = currencyControls(list);
+  if (tabs.isRef && !tabs.rate) return `${nav}${tabs.html}${ratePending(tabs)}`;
 
   const { currency, rate, isRef } = tabs;
   const b = categoryBreakdown(list, currency, { rate });
@@ -391,8 +415,24 @@ onClick({
     year += Number(el.dataset.step);
     rerender();
   },
-  'analysis-tab': (el) => {
-    tab = el.dataset.tab;
+  'analysis-currency': async (el) => {
+    viewCurrency = el.dataset.currency;
+    // Si se está convirtiendo, la moneda elegida pasa a ser la de referencia.
+    if (state.settings.refCurrency) await setSetting('refCurrency', viewCurrency);
+    rerender();
+  },
+  'analysis-quote': async (el) => {
+    const quote = el.dataset.quote || null;
+    if (quote && !sourceAllowed(quote)) {
+      toast(t('plan.proOnly'), { action: t('plan.seePlans'), onAction: () => (location.hash = '#/mas#plan') });
+      return;
+    }
+    if (quote) {
+      await setSetting('rateSource', quote);
+      await setSetting('refCurrency', viewCurrency ?? 'ARS');
+    } else {
+      await setSetting('refCurrency', null);
+    }
     rerender();
   },
   'evo-range': (el) => {
