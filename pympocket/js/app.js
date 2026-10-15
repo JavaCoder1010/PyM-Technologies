@@ -8,11 +8,12 @@ import { alive, housekeeping, importLegacy, load, subscribe, autoBackup, wipeLoc
 import { currentDatabase, deleteDatabase, useDatabase } from './db.js';
 import { deleteRemoteData, flush, onSyncStatus, startSync, syncNow } from './sync.js';
 import { disableBiometric, keepUnlocked, needsUnlock } from './lock.js';
-import { ensureRates, initRates, latestRate, refreshRates } from './rates.js';
+import { ensureRates, initRates, refreshRates } from './rates.js';
 import { processRecurring } from './recurring.js';
 import { notifyIfDue } from './habits.js';
-import { formatDate, formatDateTime, formatDayMonth, money } from './format.js';
-import { confirmDialog, installEventDelegation, onClick, toast } from './ui.js';
+import { formatDateTime } from './format.js';
+import { closeDialog, confirmDialog, installEventDelegation, onClick, openDialog, toast } from './ui.js';
+import { PALETTE } from './defaults.js';
 import { isDemo, loadDemo } from './demo.js';
 import { APP_URL, DEMO_ONLY } from './config.js';
 import { authErrorText, hideAuth, offerBiometric, showAuth, showLock } from './views/auth.js';
@@ -70,7 +71,7 @@ function render({ navigated = false } = {}) {
     else link.removeAttribute('aria-current');
   }
   view.bind?.(main, () => render());
-  renderRateBadge();
+  renderAccountButton();
   renderDemoBanner();
 
   if (navigated) {
@@ -86,18 +87,53 @@ function render({ navigated = false } = {}) {
   }
 }
 
-function renderRateBadge() {
-  const rate = latestRate();
-  const badge = document.getElementById('rate-badge');
-  if (!rate) {
-    badge.innerHTML = '';
-    badge.title = '';
+// ---------- Cuentas (como Instagram) ----------
+
+const SWITCHED_KEY = 'pympocket.switchedTo';
+
+/** Color fijo por cuenta, para distinguirlas de un vistazo. */
+function avatar(account, size = '') {
+  let hash = 0;
+  for (const ch of account.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  const color = PALETTE[hash % PALETTE.length];
+  return `<span class="avatar ${size}" style="--avatar:${h(color)}" aria-hidden="true">${h(account.email.charAt(0).toUpperCase())}</span>`;
+}
+
+function renderAccountButton() {
+  const btn = document.getElementById('account-btn');
+  const user = auth.currentUser();
+  if (!user || localStorage.getItem(MODE_KEY) === 'demo') {
+    btn.hidden = true;
     return;
   }
-  const short = t(`rates.short.${rate.source}`);
-  badge.innerHTML = `<span class="sr-only">${h(t('rates.badgeLabel', { source: t(`rates.sources.${rate.source}`) }))}</span><span aria-hidden="true">US$ ${h(short)}</span> ${h(money(rate.USD, 'ARS'))} <span class="muted">· ${h(formatDayMonth(rate.date))}</span>`;
-  badge.title = t('rates.badgeTitle', { source: t(`rates.sources.${rate.source}`), date: formatDate(rate.date) });
+  btn.hidden = false;
+  btn.innerHTML = `${avatar(user)}<span class="account-email">${h(user.email)}</span>${icon('chevron-down')}`;
+  btn.setAttribute('aria-label', t('accounts.menuLabel', { email: user.email }));
 }
+
+function openAccountMenu() {
+  const accounts = auth.listAccounts();
+  openDialog(`<div class="sheet sheet-small">
+    <header class="sheet-header"><h2>${h(t('accounts.title'))}</h2>
+      <button type="button" class="btn-icon" data-action="close-dialog" aria-label="${h(t('common.close'))}">${icon('close')}</button></header>
+    <ul class="account-list">${accounts
+      .map(
+        (a) => `<li><button type="button" class="account-row" data-action="switch-account" data-id="${h(a.id)}" ${a.active ? 'aria-current="true"' : ''}>
+          ${avatar(a, 'avatar-lg')}<span class="account-row-email">${h(a.email)}</span>
+          ${a.active ? `<span class="account-active">${icon('check')} ${h(t('accounts.active'))}</span>` : ''}
+        </button></li>`,
+      )
+      .join('')}</ul>
+    ${accounts.length < auth.MAX_ACCOUNTS
+      ? `<button type="button" class="btn btn-ghost" data-action="add-account">${icon('plus')} ${h(t('accounts.add'))}</button>`
+      : `<p class="muted small">${h(t('accounts.limit', { n: auth.MAX_ACCOUNTS }))}</p>`}
+    <button type="button" class="link-btn" data-action="manage-account">${h(t('accounts.manage'))}</button>
+    <p class="muted small">${h(t('accounts.hint'))}</p>
+  </div>`);
+}
+
+/** Antes de cambiar de cuenta, intenta subir lo pendiente (sin esperar más de unos segundos). */
+const flushQuickly = () => Promise.race([flush().catch(() => {}), sleep(3000)]);
 
 /** Actualiza en segundo plano los historiales de cotización que hacen falta. */
 const updateRates = () =>
@@ -227,7 +263,11 @@ async function start() {
   hideSplash();
   showAuth('login', {
     notice: error ? { tone: 'error', text: authErrorText({ code: error }) } : null,
-    onDone: () => startApp({ offerBiometric: true }),
+    addingFrom: auth.addingFrom(),
+    onDone: () => {
+      auth.clearAdding();
+      startApp({ offerBiometric: true });
+    },
   });
 }
 
@@ -261,6 +301,11 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
   hideSplash();
   subscribe(scheduleRender);
   if (!demo) {
+    const switched = sessionStorage.getItem(SWITCHED_KEY);
+    if (switched) {
+      sessionStorage.removeItem(SWITCHED_KEY);
+      toast(t('accounts.switched', { email: switched }), { tone: 'success' });
+    }
     onSyncStatus(renderSyncBadge);
     if (imported) toast(t('sync.imported', { n: imported }), { tone: 'success', timeout: 7000 });
     if (offer) offerBiometric();
@@ -340,6 +385,29 @@ const reloadHome = () => {
 // ---------- Acciones de cuenta ----------
 
 onClick({
+  'account-menu': () => openAccountMenu(),
+  'manage-account': () => {
+    closeDialog();
+    location.hash = '#/mas#cuenta';
+  },
+  'switch-account': async (el) => {
+    const target = auth.listAccounts().find((a) => a.id === el.dataset.id);
+    if (!target || target.active) return closeDialog();
+    await flushQuickly();
+    auth.switchAccount(target.id);
+    sessionStorage.setItem(SWITCHED_KEY, target.email);
+    reloadHome();
+  },
+  'add-account': async () => {
+    if (auth.listAccounts().length >= auth.MAX_ACCOUNTS) return toast(t('accounts.limit', { n: auth.MAX_ACCOUNTS }));
+    await flushQuickly();
+    auth.beginAddAccount();
+    reloadHome();
+  },
+  'cancel-add-account': () => {
+    auth.cancelAddAccount();
+    reloadHome();
+  },
   'sync-now': () => syncNow(),
   'reset-demo': async () => {
     if (!(await confirmDialog(t('demo.resetConfirm'), { confirm: t('demo.reset') }))) return;

@@ -1,10 +1,17 @@
 // Cuentas de usuario con Supabase Auth (email y contraseña).
-// Se usa la API HTTP directamente, sin librerías. La sesión queda guardada en
-// el dispositivo: después del primer ingreso la app abre sin pedir contraseña
+// Se usa la API HTTP directamente, sin librerías. Las sesiones quedan guardadas
+// en el dispositivo: después del primer ingreso la app abre sin pedir contraseña
 // (o con huella/rostro si el usuario lo activó, ver js/lock.js).
+//
+// Varias cuentas por dispositivo (como Instagram): se guardan todas las sesiones
+// y una es la "activa". Cambiar de cuenta no cierra sesión ni borra datos: cada
+// cuenta tiene su propia base local (ver db.js) y su propia sincronización.
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
 
-const STORAGE_KEY = 'pympocket.session';
+const ACCOUNTS_KEY = 'pympocket.accounts'; // { active: userId | null, sessions: [session] }
+const LEGACY_KEY = 'pympocket.session'; // una sola sesión (versiones anteriores)
+const ADDING_KEY = 'pympocket.addingFrom'; // cuenta desde la que se está agregando otra
+export const MAX_ACCOUNTS = 5;
 
 let session = null; // { access_token, refresh_token, expires_at, user: { id, email } }
 const listeners = new Set();
@@ -63,20 +70,103 @@ export async function api(path, { method = 'POST', body, token, headers = {} } =
   return data;
 }
 
-function setSession(raw) {
-  session = raw
-    ? {
-        access_token: raw.access_token,
-        refresh_token: raw.refresh_token,
-        expires_at: Number(raw.expires_at) || Math.floor(Date.now() / 1000) + Number(raw.expires_in || 3600),
-        user: { id: raw.user.id, email: raw.user.email },
-      }
-    : null;
+// ---------- Cuentas guardadas en el dispositivo ----------
+
+function readAccounts() {
+  let data = null;
   try {
-    if (session) localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-    else localStorage.removeItem(STORAGE_KEY);
+    data = JSON.parse(localStorage.getItem(ACCOUNTS_KEY));
   } catch {}
+  if (!Array.isArray(data?.sessions)) data = { active: null, sessions: [] };
+  // Migración: una sesión guardada por versiones anteriores (o por una pestaña
+  // que todavía tiene abierta la versión anterior) se suma a las cuentas.
+  let legacy = null;
+  try {
+    legacy = JSON.parse(localStorage.getItem(LEGACY_KEY));
+  } catch {}
+  if (legacy?.user?.id) {
+    data.sessions = [...data.sessions.filter((s) => s.user.id !== legacy.user.id), legacy];
+    data.active ??= legacy.user.id;
+  }
+  return data;
+}
+
+function writeAccounts(data) {
+  try {
+    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(data));
+    localStorage.removeItem(LEGACY_KEY);
+  } catch {}
+}
+
+/** Cuentas de este dispositivo: [{ id, email, active }]. */
+export function listAccounts() {
+  const { active, sessions } = readAccounts();
+  return sessions.map((s) => ({ id: s.user.id, email: s.user.email, active: s.user.id === active }));
+}
+
+/** Guarda la sesión como cuenta activa (o quita la cuenta activa si raw es null). */
+function setSession(raw) {
+  const data = readAccounts();
+  if (raw) {
+    session = {
+      access_token: raw.access_token,
+      refresh_token: raw.refresh_token,
+      expires_at: Number(raw.expires_at) || Math.floor(Date.now() / 1000) + Number(raw.expires_in || 3600),
+      user: { id: raw.user.id, email: raw.user.email },
+    };
+    data.sessions = [...data.sessions.filter((s) => s.user.id !== session.user.id), session];
+    data.active = session.user.id;
+  } else {
+    if (session) data.sessions = data.sessions.filter((s) => s.user.id !== session.user.id);
+    data.active = null;
+    session = null;
+  }
+  writeAccounts(data);
   listeners.forEach((fn) => fn(session));
+}
+
+/** Pasa a otra cuenta guardada (la app se recarga después). */
+export function switchAccount(userId) {
+  const data = readAccounts();
+  if (!data.sessions.some((s) => s.user.id === userId)) return false;
+  data.active = userId;
+  writeAccounts(data);
+  try {
+    sessionStorage.removeItem(ADDING_KEY);
+  } catch {}
+  return true;
+}
+
+/** Empieza a agregar otra cuenta: se muestra el ingreso y se puede volver a la actual. */
+export function beginAddAccount() {
+  const data = readAccounts();
+  try {
+    if (data.active) sessionStorage.setItem(ADDING_KEY, data.active);
+  } catch {}
+  data.active = null;
+  writeAccounts(data);
+}
+
+/** Cuenta desde la que se está agregando otra (para ofrecer "Volver a …"). */
+export function addingFrom() {
+  let id = null;
+  try {
+    id = sessionStorage.getItem(ADDING_KEY);
+  } catch {}
+  return listAccounts().find((a) => a.id === id) ?? null;
+}
+
+/** Termina "Agregar cuenta" (la cuenta nueva ya quedó activa). */
+export function clearAdding() {
+  try {
+    sessionStorage.removeItem(ADDING_KEY);
+  } catch {}
+}
+
+/** Cancela "Agregar cuenta" y vuelve a la cuenta anterior. */
+export function cancelAddAccount() {
+  const from = addingFrom();
+  if (from) switchAccount(from.id);
 }
 
 /**
@@ -102,11 +192,12 @@ export async function init() {
 }
 
 function restore() {
-  try {
-    session = JSON.parse(localStorage.getItem(STORAGE_KEY)) || null;
-  } catch {
-    session = null;
-  }
+  const data = readAccounts();
+  // Si la cuenta activa ya no está (por ejemplo, cerró sesión) se usa otra guardada,
+  // salvo que el usuario esté agregando una cuenta nueva.
+  if (!data.active && data.sessions.length && !addingFrom()) data.active = data.sessions[0].user.id;
+  session = data.sessions.find((s) => s.user.id === data.active) ?? null;
+  writeAccounts(data);
   return session;
 }
 
@@ -135,10 +226,12 @@ export async function updatePassword(password) {
 /** Vuelve a pedir la contraseña del usuario actual (por ejemplo, al desbloquear). */
 export const reauthenticate = (password) => signIn(session.user.email, password);
 
+/** Cierra la sesión de la cuenta activa solo en este dispositivo (las otras cuentas quedan). */
 export async function signOut() {
   const token = session?.access_token;
   setSession(null);
-  if (token) api('/auth/v1/logout', { token }).catch(() => {});
+  // scope=local: sin esto, Supabase cierra la sesión de la cuenta en todos los dispositivos.
+  if (token) api('/auth/v1/logout?scope=local', { token }).catch(() => {});
 }
 
 let refreshing = null;

@@ -355,8 +355,6 @@ export default {
     updated: 'Exchange rates updated ({date})',
     offline: 'Offline: using the last saved exchange rates.',
     error: "We couldn't update the exchange rates. Using the last saved ones.",
-    badgeLabel: '{source}: ',
-    badgeTitle: '{source}, rate for {date}',
     sources: { bcra: 'Official BCRA (wholesale)', bna: 'Banco Nación (cash)', mep: 'MEP dollar', blue: 'Blue dollar' },
     short: { bcra: 'BCRA', bna: 'BNA', mep: 'MEP', blue: 'Blue' },
     today: 'Dollar exchange rates',
@@ -435,6 +433,37 @@ export default {
     title: 'More options',
     manage: 'Manage',
     version: 'version',
+  },
+  install: {
+    title: 'Phone app',
+    banner: 'Install PymPocket on your phone and open it like any other app.',
+    button: { android: 'Download Android app', ios: 'Install on iPhone', other: 'Install on this computer' },
+    text: {
+      android: 'Download the app and open PymPocket from its icon, no link needed. Your data is the same as on the web.',
+      ios: 'Add PymPocket to your home screen: it opens full screen, like an app.',
+      other: 'Install PymPocket on this computer to open it from its own icon.',
+    },
+    stepsTitle: { android: 'Install on Android', ios: 'Install on iPhone' },
+    steps: {
+      android: [
+        'If the browser asks whether to download the file anyway, tap Download.',
+        'Wait for PymPocket.apk to finish downloading.',
+        'Open the file from the notification or the Downloads folder.',
+        'If Android asks, go to Settings and turn on "Allow from this source".',
+        'Tap Install. If a Play Protect warning appears, choose "Install anyway".',
+        'Done: open PymPocket from its icon.',
+      ],
+      ios: [
+        'Open this page in Safari.',
+        'Tap Share (the square with the up arrow).',
+        'Choose "Add to Home Screen" and tap Add.',
+        'Done: open PymPocket from its icon.',
+      ],
+    },
+    androidNote: 'The warnings appear because the app doesn’t come from the Play Store.',
+    downloadAgain: 'Download again',
+    understood: 'Got it',
+    installed: 'PymPocket is installed',
   },
 
   appearance: {
@@ -598,6 +627,20 @@ export default {
     enabledHint: 'PymPocket asks for your fingerprint or face when you open it and when you come back after 5 minutes.',
     enableFailed: "It couldn't be turned on. You can try again from More.",
     disabled: 'Fingerprint or face unlock turned off',
+  },
+
+  accounts: {
+    menuLabel: 'Account in use: {email}. Switch account',
+    title: 'Accounts on this device',
+    active: 'In use',
+    add: 'Add another account',
+    addTitle: 'Add another account',
+    addHint: 'For example, your work account. Then you can switch between accounts with one tap, without signing out.',
+    backTo: 'Back to {email}',
+    manage: 'Manage this account',
+    hint: "Each account has its own data. Switching accounts doesn't sign out of any of them.",
+    switched: "You're now using {email}",
+    limit: 'You can have up to {n} accounts on this device.',
   },
 
   account: {

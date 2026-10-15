@@ -10,7 +10,8 @@ import { currentUser } from './auth.js';
 
 const RELOCK_AFTER_MS = 5 * 60 * 1000;
 const keyFor = (uid) => `pympocket.lock.${uid}`;
-const UNLOCKED_KEY = 'pympocket.unlockedAt';
+// Momento del último desbloqueo, por cuenta: al pasar a otra cuenta con huella se pide de nuevo.
+const unlockedKey = () => `pympocket.unlockedAt.${currentUser()?.id ?? ''}`;
 
 const toB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const fromB64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -78,7 +79,7 @@ export async function unlockWithBiometric() {
 
 export function markUnlocked() {
   try {
-    sessionStorage.setItem(UNLOCKED_KEY, String(Date.now()));
+    sessionStorage.setItem(unlockedKey(), String(Date.now()));
   } catch {}
 }
 
@@ -88,7 +89,7 @@ export function markUnlocked() {
  */
 export function needsUnlock() {
   if (!biometricEnabled()) return false;
-  const at = Number(sessionStorage.getItem(UNLOCKED_KEY) || 0);
+  const at = Number(sessionStorage.getItem(unlockedKey()) || 0);
   return !at || Date.now() - at > RELOCK_AFTER_MS;
 }
 

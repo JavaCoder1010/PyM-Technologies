@@ -355,8 +355,6 @@ export default {
     updated: 'Cotizaciones actualizadas ({date})',
     offline: 'Sin conexión: se usan las últimas cotizaciones guardadas.',
     error: 'No pudimos actualizar las cotizaciones. Se usan las últimas guardadas.',
-    badgeLabel: '{source}: ',
-    badgeTitle: '{source}, cotización del {date}',
     sources: { bcra: 'Oficial BCRA (mayorista)', bna: 'Banco Nación (billete)', mep: 'Dólar MEP', blue: 'Dólar blue' },
     short: { bcra: 'BCRA', bna: 'BNA', mep: 'MEP', blue: 'Blue' },
     today: 'Cotizaciones del dólar',
@@ -435,6 +433,37 @@ export default {
     title: 'Más opciones',
     manage: 'Administrar',
     version: 'versión',
+  },
+  install: {
+    title: 'App para el celular',
+    banner: 'Instalá PymPocket en tu celular y abrila como cualquier app.',
+    button: { android: 'Descargar app para Android', ios: 'Instalar en iPhone', other: 'Instalar en esta computadora' },
+    text: {
+      android: 'Descargá la app y abrí PymPocket desde su ícono, sin entrar a ningún link. Tus datos son los mismos que en la web.',
+      ios: 'Agregá PymPocket a tu pantalla de inicio: se abre a pantalla completa, como una app.',
+      other: 'Instalá PymPocket en esta computadora para abrirla desde su propio ícono.',
+    },
+    stepsTitle: { android: 'Instalar en Android', ios: 'Instalar en iPhone' },
+    steps: {
+      android: [
+        'Si el navegador pregunta si querés descargar el archivo igual, tocá Descargar.',
+        'Esperá a que termine de descargarse PymPocket.apk.',
+        'Abrí el archivo desde la notificación o desde la carpeta Descargas.',
+        'Si Android lo pide, entrá a Configuración y activá "Permitir de esta fuente".',
+        'Tocá Instalar. Si aparece un aviso de Play Protect, elegí "Instalar de todas formas".',
+        'Listo: abrí PymPocket desde su ícono.',
+      ],
+      ios: [
+        'Abrí esta página en Safari.',
+        'Tocá Compartir (el cuadrado con la flecha hacia arriba).',
+        'Elegí "Agregar a inicio" y tocá Agregar.',
+        'Listo: abrí PymPocket desde su ícono.',
+      ],
+    },
+    androidNote: 'Los avisos aparecen porque la app no viene de la Play Store.',
+    downloadAgain: 'Descargar de nuevo',
+    understood: 'Entendido',
+    installed: 'PymPocket quedó instalada',
   },
 
   appearance: {
@@ -597,6 +626,20 @@ export default {
     enabledHint: 'PymPocket te pide la huella o el rostro al abrirla y cuando volvés después de 5 minutos.',
     enableFailed: 'No se pudo activar. Podés probar de nuevo desde Más.',
     disabled: 'Desactivaste el desbloqueo con huella o rostro',
+  },
+
+  accounts: {
+    menuLabel: 'Cuenta en uso: {email}. Cambiar de cuenta',
+    title: 'Cuentas en este dispositivo',
+    active: 'En uso',
+    add: 'Agregar otra cuenta',
+    addTitle: 'Agregá otra cuenta',
+    addHint: 'Por ejemplo, la de tu trabajo. Después cambiás entre cuentas con un toque, sin cerrar sesión.',
+    backTo: 'Volver a {email}',
+    manage: 'Administrar esta cuenta',
+    hint: 'Cada cuenta tiene sus propios datos. Cambiar de cuenta no cierra la sesión de ninguna.',
+    switched: 'Ahora estás usando {email}',
+    limit: 'Podés tener hasta {n} cuentas en este dispositivo.',
   },
 
   account: {

@@ -16,6 +16,7 @@ import { analyzeImport, movementsCSV } from '../csv.js';
 import { processRecurring } from '../recurring.js';
 import { closeDialog, confirmDialog, download, onClick, onSubmit, openDialog, pickTextFile, toast } from '../ui.js';
 import { icon, pageHeader } from './common.js';
+import { installCard } from '../install.js';
 
 let backups = [];
 let canBiometric = false;
@@ -30,6 +31,7 @@ export function render() {
   const weekdays = tRaw('common.weekdays');
   const notifState = 'Notification' in window ? Notification.permission : 'unsupported';
   return `${pageHeader(t('more.title'))}
+    ${installCard()}
     ${accountSection()}
     ${appearanceSection()}
     <nav class="card link-list" aria-label="${h(t('more.manage'))}">
@@ -113,7 +115,7 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.3.0 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.5.0 · PyM Technologies</p>`;
 }
 
 let ratesRequested = false;
@@ -272,6 +274,7 @@ function accountSection() {
       ${h(t(`sync.state.${syncState}`))}${sync.pending ? ` · ${h(t('sync.pendingCount', { n: sync.pending }))}` : ''}
       ${sync.lastSync ? `<span class="muted"> · ${h(t('sync.lastSync', { date: formatDateTime(sync.lastSync) }))}</span>` : ''}</p>
     <div class="button-grid">
+      <button type="button" class="btn btn-ghost" data-action="account-menu">${icon('user')} ${h(t('accounts.title'))}</button>
       <button type="button" class="btn btn-ghost" data-action="sync-now">${icon('repeat')} ${h(t('sync.syncNow'))}</button>
       ${canBiometric
         ? biometricEnabled()

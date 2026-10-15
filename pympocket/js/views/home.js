@@ -11,6 +11,7 @@ import { pendingSummary, reminderDue } from '../habits.js';
 import { onClick, toast } from '../ui.js';
 import { progress } from '../charts.js';
 import { catBadge, conversionNote, empty, icon, movementRow } from './common.js';
+import { installBanner } from '../install.js';
 
 export const title = () => t('nav.home');
 
@@ -22,6 +23,7 @@ export function render() {
   if (!alive('movements').length) {
     return `<h1 tabindex="-1" class="sr-only">${h(t('nav.home'))}</h1>
       ${reminderBanner()}
+      ${installBanner()}
       <section class="card hero-empty">
         <p class="hero-emoji" aria-hidden="true">👛</p>
         <h2>${h(t('home.welcomeTitle'))}</h2>
@@ -34,6 +36,7 @@ export function render() {
 
   return `<h1 tabindex="-1" class="sr-only">${h(t('nav.home'))}</h1>
     ${reminderBanner()}
+    ${installBanner()}
     ${pendingCard()}
     ${summaryCard()}
     <section class="card" aria-labelledby="home-month">

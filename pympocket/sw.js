@@ -1,6 +1,6 @@
 // Service worker: guarda la app para que abra y funcione sin conexión.
 // Al publicar cambios, subir VERSION para que los usuarios reciban la nueva versión.
-const VERSION = 'pympocket-v2.3.0';
+const VERSION = 'pympocket-v2.5.0';
 
 const APP_SHELL = [
   './',
@@ -24,6 +24,7 @@ const APP_SHELL = [
   'js/i18n/en.js',
   'js/i18n/es.js',
   'js/i18n/pt.js',
+  'js/install.js',
   'js/lock.js',
   'js/model.js',
   'js/plan.js',
@@ -67,6 +68,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   // La cotización del BCRA y otros orígenes van siempre a la red.
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  // El instalador de Android (descargas/) siempre se baja del servidor, nunca de la caché.
+  if (url.pathname.includes('/descargas/')) return;
   // En la computadora de desarrollo se pide siempre la versión nueva (y la
   // caché solo se usa sin conexión), así los cambios se ven al recargar.
   if (LOCAL_DEV) {

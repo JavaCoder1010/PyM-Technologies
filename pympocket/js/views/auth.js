@@ -6,18 +6,21 @@ import * as auth from '../auth.js';
 import { biometricAvailable, enableBiometric, markUnlocked, unlockWithBiometric } from '../lock.js';
 import { onChange, onClick, onSubmit, openDialog, closeDialog, toast } from '../ui.js';
 import { icon } from './common.js';
+import { installButton } from '../install.js';
 
 const MIN_PASSWORD = 8;
 let screen = 'login';
 let message = null; // { tone: 'info' | 'error', text }
 let lastEmail = '';
 let done = () => {}; // qué hacer al terminar de ingresar (lo define app.js)
+let adding = null; // { id, email } de la cuenta desde la que se agrega otra
 
 const root = () => document.getElementById('main');
 
 /** Muestra las pantallas de cuenta. `onDone` se llama con la sesión iniciada. */
-export function showAuth(initial = 'login', { onDone, notice = null } = {}) {
+export function showAuth(initial = 'login', { onDone, notice = null, addingFrom = null } = {}) {
   done = onDone ?? done;
+  adding = addingFrom;
   screen = initial;
   message = notice;
   document.body.classList.add('auth-mode');
@@ -36,7 +39,7 @@ function draw() {
       ${languagePicker()}
     </div>
   </div>`;
-  document.title = `${t(`auth.titles.${screen}`)} · PymPocket`;
+  document.title = `${screen === 'login' && adding ? t('accounts.addTitle') : t(`auth.titles.${screen}`)} · PymPocket`;
   (root().querySelector('[autofocus]') ?? root().querySelector('h1'))?.focus();
 }
 
@@ -62,7 +65,8 @@ const passwordField = (name, label, autocomplete, { autofocus = false, hint = ''
 
 const screens = {
   login: () => `
-    <h1 tabindex="-1">${h(t('auth.titles.login'))}</h1>
+    <h1 tabindex="-1">${h(t(adding ? 'accounts.addTitle' : 'auth.titles.login'))}</h1>
+    ${adding ? `<p class="muted">${h(t('accounts.addHint'))}</p>` : ''}
     ${notice()}
     <form data-form="auth-login" class="stack" novalidate>
       <label>${h(t('auth.email'))}<input type="email" name="email" autocomplete="username" required autofocus value="${h(lastEmail)}" inputmode="email"></label>
@@ -73,9 +77,12 @@ const screens = {
       <button type="button" class="link-btn" data-action="auth-screen" data-screen="recover">${h(t('auth.forgot'))}</button>
       <p>${h(t('auth.noAccount'))} <button type="button" class="link-btn" data-action="auth-screen" data-screen="signup">${h(t('auth.createAccount'))}</button></p>
     </div>
-    <div class="auth-demo">
-      <a class="btn btn-ghost" href="?demo=1#/inicio">${icon('chart')} ${h(t('auth.tryDemo'))}</a>
-    </div>`,
+    ${adding
+      ? `<div class="auth-demo"><button type="button" class="btn btn-ghost" data-action="cancel-add-account">${icon('chevron-left')} ${h(t('accounts.backTo', { email: adding.email }))}</button></div>`
+      : `<div class="auth-demo">
+          <a class="btn btn-ghost" href="?demo=1#/inicio">${icon('chart')} ${h(t('auth.tryDemo'))}</a>
+          ${installButton({ className: 'btn btn-ghost' })}
+        </div>`}`,
 
   signup: () => `
     <h1 tabindex="-1">${h(t('auth.titles.signup'))}</h1>
@@ -89,6 +96,7 @@ const screens = {
     </form>
     <div class="auth-links">
       <p>${h(t('auth.haveAccount'))} <button type="button" class="link-btn" data-action="auth-screen" data-screen="login">${h(t('auth.signIn'))}</button></p>
+      ${adding ? `<button type="button" class="link-btn" data-action="cancel-add-account">${h(t('accounts.backTo', { email: adding.email }))}</button>` : ''}
     </div>`,
 
   checkEmail: () => `

@@ -11,9 +11,13 @@ const site = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const source = resolve(site, '..', 'PymPocket');
 const target = join(site, 'pympocket');
 
-// Lo que no forma parte de la app publicada.
-const EXCLUDE = new Set(['.claude', '.git', 'node_modules', 'README.md', 'SUPABASE.md', 'supabase', '_headers']);
-const excluded = (path) => EXCLUDE.has(basename(path)) || path.endsWith('.docx');
+// Lo que no forma parte de la demo: documentación, configuración de Netlify y
+// la app de Android (instalador y vínculo), que la demo no ofrece.
+// Se compara sin mayúsculas: al bajar la carpeta de Netlify los nombres llegan en minúsculas.
+const EXCLUDE = new Set(
+  ['.claude', '.git', 'node_modules', 'README.md', 'SUPABASE.md', 'supabase', '_headers', '_redirects', 'assetlinks.json', 'descargas'].map((n) => n.toLowerCase()),
+);
+const excluded = (path) => EXCLUDE.has(basename(path).toLowerCase()) || path.toLowerCase().endsWith('.docx');
 
 if (!existsSync(join(source, 'index.html'))) {
   console.error(`No se encontró PymPocket en ${source}`);

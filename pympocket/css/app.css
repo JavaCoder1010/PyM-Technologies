@@ -109,8 +109,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
 }
 .brand { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-size: 1.15rem; }
 .brand strong { color: var(--accent); }
-.rate-badge { font-size: 0.8rem; color: var(--text); text-decoration: none; background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; white-space: nowrap; }
-.rate-badge:empty { display: none; }
 
 .demo-banner { display: flex; align-items: center; justify-content: center; gap: 8px 16px; flex-wrap: wrap; background: var(--accent-soft); color: var(--text); padding: 8px 16px; font-size: 0.875rem; text-align: center; }
 .demo-banner[hidden] { display: none; }
@@ -447,6 +445,10 @@ dialog::backdrop { background: rgb(10 5 25 / 0.5); }
 .banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--accent-soft); border-radius: var(--radius); padding: 12px 14px; }
 .banner p { flex: 1; margin: 0; font-weight: 600; min-width: 160px; }
 
+/* Pasos para instalar la app (js/install.js) */
+.install-steps { display: grid; gap: 10px; margin: 0 0 12px; padding-left: 22px; }
+.install-steps li { padding-left: 4px; }
+
 /* ---------- Estados vacíos y Pro ---------- */
 
 .empty { text-align: center; padding: 32px 16px; display: grid; gap: 8px; justify-items: center; }
@@ -544,7 +546,7 @@ body.auth-mode .topbar { display: none; }
 .auth-brand strong { color: var(--accent); }
 .auth-links { display: grid; gap: 6px; justify-items: center; text-align: center; font-size: 0.95rem; }
 .auth-links p { margin: 0; }
-.auth-demo { border-top: 1px solid var(--border); padding-top: 14px; display: grid; }
+.auth-demo { border-top: 1px solid var(--border); padding-top: 14px; display: grid; gap: 8px; }
 .auth-msg { border-radius: var(--radius-sm); padding: 10px 12px; margin: 0; font-size: 0.9rem; }
 .auth-msg-info { background: var(--accent-soft); }
 .auth-msg-error { background: var(--danger-soft); color: var(--danger); font-weight: 600; }
@@ -627,3 +629,31 @@ body.locked { overflow: hidden; }
   .control-row { grid-template-columns: 150px 1fr; align-items: center; }
 }
 @media print { .analysis-controls { display: none !important; } }
+
+/* ---------- Cuentas (cambio rápido, como Instagram) ---------- */
+
+.account-btn {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 40px; max-width: 260px;
+  padding: 3px 10px 3px 3px; border: 1px solid var(--border); border-radius: 999px;
+  background: var(--surface); color: var(--text); cursor: pointer;
+}
+.account-btn[hidden] { display: none; }
+.account-btn:hover { border-color: var(--accent); }
+.account-btn .icon { width: 1rem; height: 1rem; color: var(--muted); }
+.account-email { font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 520px) { .account-email { display: none; } .account-btn { padding-right: 6px; } }
+.avatar {
+  --avatar: var(--accent);
+  display: inline-grid; place-items: center; flex: none; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--avatar); color: #fff; font-weight: 700; font-size: 0.95rem;
+}
+.avatar-lg { width: 42px; height: 42px; font-size: 1.1rem; }
+.account-list { list-style: none; display: grid; gap: 4px; }
+.account-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px; min-height: 56px;
+  border: 1px solid transparent; border-radius: var(--radius-sm); background: none; text-align: left; cursor: pointer;
+}
+.account-row:hover { background: var(--surface-2); }
+.account-row[aria-current='true'] { background: var(--accent-soft); border-color: var(--accent); }
+.account-row-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.account-active { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--accent-strong); font-weight: 600; }
