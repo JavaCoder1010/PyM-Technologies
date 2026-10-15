@@ -115,7 +115,7 @@ export function render() {
       <button type="button" class="btn btn-danger-ghost" data-action="wipe-account-data">${icon('trash')} ${h(t('privacy.wipe'))}</button>
     </section>
 
-    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.5.0 · PyM Technologies</p>`;
+    <p class="muted small center">PymPocket · ${h(t('more.version'))} 2.6.0 · PyM Technologies</p>`;
 }
 
 let ratesRequested = false;
@@ -269,11 +269,12 @@ function accountSection() {
   const syncState = sync.state === 'idle' ? 'synced' : sync.state;
   return `<section class="card" id="cuenta" aria-labelledby="more-account">
     <h2 id="more-account">${h(t('account.title'))}</h2>
-    <p class="account-email">${icon('user')} <strong>${h(user.email)}</strong></p>
+    <p class="account-email">${icon('user')} <span>${user.name ? `<strong>${h(user.name)}</strong><br>` : ''}<span class="${user.name ? 'muted small' : ''}">${h(user.email)}</span></span></p>
     <p class="small sync-line" data-state="${syncState}">${icon(syncState === 'offline' || syncState === 'error' ? 'cloud-off' : 'cloud')}
       ${h(t(`sync.state.${syncState}`))}${sync.pending ? ` · ${h(t('sync.pendingCount', { n: sync.pending }))}` : ''}
       ${sync.lastSync ? `<span class="muted"> · ${h(t('sync.lastSync', { date: formatDateTime(sync.lastSync) }))}</span>` : ''}</p>
     <div class="button-grid">
+      <button type="button" class="btn btn-ghost" data-action="edit-name">${icon('edit')} ${h(t(user.name ? 'profile.edit' : 'profile.add'))}</button>
       <button type="button" class="btn btn-ghost" data-action="account-menu">${icon('user')} ${h(t('accounts.title'))}</button>
       <button type="button" class="btn btn-ghost" data-action="sync-now">${icon('repeat')} ${h(t('sync.syncNow'))}</button>
       ${canBiometric

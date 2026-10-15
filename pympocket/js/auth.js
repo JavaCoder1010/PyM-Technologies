@@ -98,11 +98,21 @@ function writeAccounts(data) {
   } catch {}
 }
 
-/** Cuentas de este dispositivo: [{ id, email, active }]. */
+/** Cuentas de este dispositivo: [{ id, email, name, active }]. */
 export function listAccounts() {
   const { active, sessions } = readAccounts();
-  return sessions.map((s) => ({ id: s.user.id, email: s.user.email, active: s.user.id === active }));
+  return sessions.map((s) => ({ id: s.user.id, email: s.user.email, name: s.user.name ?? null, active: s.user.id === active }));
 }
+
+/** Nombre para mostrar: "Nombre Apellido" del perfil, o null si no lo cargó. */
+export function displayName(user) {
+  const meta = user?.user_metadata ?? {};
+  const full = String(meta.full_name ?? `${meta.first_name ?? ''} ${meta.last_name ?? ''}`).trim();
+  return full || null;
+}
+
+/** Nombre de una cuenta, o su email si todavía no tiene nombre. */
+export const accountLabel = (account) => account?.name || account?.email || '';
 
 /** Guarda la sesión como cuenta activa (o quita la cuenta activa si raw es null). */
 function setSession(raw) {
@@ -112,7 +122,8 @@ function setSession(raw) {
       access_token: raw.access_token,
       refresh_token: raw.refresh_token,
       expires_at: Number(raw.expires_at) || Math.floor(Date.now() / 1000) + Number(raw.expires_in || 3600),
-      user: { id: raw.user.id, email: raw.user.email },
+      // Si la respuesta no trae el perfil (por ejemplo, al renovar la sesión), se conserva el nombre guardado.
+      user: { id: raw.user.id, email: raw.user.email, name: displayName(raw.user) ?? previousName(raw.user.id) },
     };
     data.sessions = [...data.sessions.filter((s) => s.user.id !== session.user.id), session];
     data.active = session.user.id;
@@ -123,6 +134,35 @@ function setSession(raw) {
   }
   writeAccounts(data);
   listeners.forEach((fn) => fn(session));
+}
+
+function previousName(userId) {
+  return readAccounts().sessions.find((s) => s.user.id === userId)?.user.name ?? null;
+}
+
+/** Actualiza el nombre guardado de la cuenta activa (sin tocar la sesión). */
+function storeName(name) {
+  if (!session) return;
+  session = { ...session, user: { ...session.user, name } };
+  const data = readAccounts();
+  data.sessions = data.sessions.map((s) => (s.user.id === session.user.id ? session : s));
+  writeAccounts(data);
+}
+
+/** Trae el perfil de la cuenta activa (nombre) desde Supabase. Sin conexión no hace nada. */
+export async function refreshProfile() {
+  if (!session || !navigator.onLine) return currentUser();
+  const user = await api('/auth/v1/user', { method: 'GET', token: await accessToken() });
+  storeName(displayName(user));
+  return currentUser();
+}
+
+/** Guarda nombre y apellido en el perfil de la cuenta activa. */
+export async function updateName(firstName, lastName) {
+  const data = { first_name: firstName, last_name: lastName, full_name: `${firstName} ${lastName}`.trim() };
+  const user = await api('/auth/v1/user', { method: 'PUT', body: { data }, token: await accessToken() });
+  storeName(displayName(user) ?? data.full_name);
+  return currentUser();
 }
 
 /** Pasa a otra cuenta guardada (la app se recarga después). */
@@ -207,8 +247,9 @@ export async function signIn(email, password) {
 }
 
 /** Crea la cuenta. Si el proyecto pide confirmar el email, devuelve { confirmationSent: true }. */
-export async function signUp(email, password) {
-  const data = await api(`/auth/v1/signup?redirect_to=${encodeURIComponent(redirectUrl())}`, { body: { email, password } });
+export async function signUp(email, password, { firstName = '', lastName = '' } = {}) {
+  const profile = { first_name: firstName, last_name: lastName, full_name: `${firstName} ${lastName}`.trim() };
+  const data = await api(`/auth/v1/signup?redirect_to=${encodeURIComponent(redirectUrl())}`, { body: { email, password, data: profile } });
   if (data.access_token) {
     setSession(data);
     return { session };

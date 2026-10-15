@@ -12,6 +12,8 @@ const MIN_PASSWORD = 8;
 let screen = 'login';
 let message = null; // { tone: 'info' | 'error', text }
 let lastEmail = '';
+let lastFirst = '';
+let lastLast = '';
 let done = () => {}; // qué hacer al terminar de ingresar (lo define app.js)
 let adding = null; // { id, email } de la cuenta desde la que se agrega otra
 
@@ -78,7 +80,7 @@ const screens = {
       <p>${h(t('auth.noAccount'))} <button type="button" class="link-btn" data-action="auth-screen" data-screen="signup">${h(t('auth.createAccount'))}</button></p>
     </div>
     ${adding
-      ? `<div class="auth-demo"><button type="button" class="btn btn-ghost" data-action="cancel-add-account">${icon('chevron-left')} ${h(t('accounts.backTo', { email: adding.email }))}</button></div>`
+      ? `<div class="auth-demo"><button type="button" class="btn btn-ghost" data-action="cancel-add-account">${icon('chevron-left')} ${h(t('accounts.backTo', { name: auth.accountLabel(adding) }))}</button></div>`
       : `<div class="auth-demo">
           <a class="btn btn-ghost" href="?demo=1#/inicio">${icon('chart')} ${h(t('auth.tryDemo'))}</a>
           ${installButton({ className: 'btn btn-ghost' })}
@@ -88,7 +90,11 @@ const screens = {
     <h1 tabindex="-1">${h(t('auth.titles.signup'))}</h1>
     ${notice()}
     <form data-form="auth-signup" class="stack" novalidate>
-      <label>${h(t('auth.email'))}<input type="email" name="email" autocomplete="username" required autofocus value="${h(lastEmail)}" inputmode="email"></label>
+      <div class="grid-2">
+        <label>${h(t('auth.firstName'))}<input name="firstName" autocomplete="given-name" required maxlength="50" autofocus value="${h(lastFirst)}"></label>
+        <label>${h(t('auth.lastName'))}<input name="lastName" autocomplete="family-name" required maxlength="50" value="${h(lastLast)}"></label>
+      </div>
+      <label>${h(t('auth.email'))}<input type="email" name="email" autocomplete="username" required value="${h(lastEmail)}" inputmode="email"></label>
       ${passwordField('password', t('auth.password'), 'new-password', { hint: t('auth.passwordHint', { n: MIN_PASSWORD }) })}
       ${passwordField('confirm', t('auth.confirmPassword'), 'new-password')}
       <label class="check"><input type="checkbox" name="consent" required> <span>${h(t('auth.consent'))}</span></label>
@@ -96,7 +102,7 @@ const screens = {
     </form>
     <div class="auth-links">
       <p>${h(t('auth.haveAccount'))} <button type="button" class="link-btn" data-action="auth-screen" data-screen="login">${h(t('auth.signIn'))}</button></p>
-      ${adding ? `<button type="button" class="link-btn" data-action="cancel-add-account">${h(t('accounts.backTo', { email: adding.email }))}</button>` : ''}
+      ${adding ? `<button type="button" class="link-btn" data-action="cancel-add-account">${h(t('accounts.backTo', { name: auth.accountLabel(adding) }))}</button>` : ''}
     </div>`,
 
   checkEmail: () => `
@@ -190,14 +196,19 @@ onSubmit({
   'auth-signup': async (data, form) => {
     const email = data.get('email').trim();
     const password = data.get('password');
+    const firstName = data.get('firstName').trim().replace(/\s+/g, ' ');
+    const lastName = data.get('lastName').trim().replace(/\s+/g, ' ');
     lastEmail = email;
+    lastFirst = firstName;
+    lastLast = lastName;
+    if (!firstName || !lastName) return fail(form, t('auth.errors.name'));
     if (!validEmail(email)) return fail(form, t('auth.errors.email'));
     if (password.length < MIN_PASSWORD) return fail(form, t('auth.errors.weak', { n: MIN_PASSWORD }));
     if (password !== data.get('confirm')) return fail(form, t('auth.errors.mismatch'));
     if (!data.get('consent')) return fail(form, t('auth.errors.consent'));
     busy(form);
     try {
-      const result = await auth.signUp(email, password);
+      const result = await auth.signUp(email, password, { firstName, lastName });
       if (result.session) {
         markUnlocked();
         done({ fresh: true, isNew: true });
@@ -252,7 +263,7 @@ export function showLock() {
   el.innerHTML = `<div class="auth-card lock-card" role="dialog" aria-modal="true" aria-labelledby="lock-title">
     <div class="auth-brand"><img src="icons/icon.svg" alt="" width="56" height="56"><span>Pym<strong>Pocket</strong></span></div>
     <h1 id="lock-title" tabindex="-1">${h(t('lock.title'))}</h1>
-    <p class="muted">${h(user?.email ?? '')}</p>
+    <p class="lock-user">${user?.name ? `<strong>${h(user.name)}</strong><br>` : ''}<span class="muted">${h(user?.email ?? '')}</span></p>
     <button type="button" class="btn btn-primary btn-large" data-action="lock-biometric">${icon('fingerprint')} ${h(t('lock.unlock'))}</button>
     <p class="form-error" role="alert" id="lock-error"></p>
     <details class="lock-password">

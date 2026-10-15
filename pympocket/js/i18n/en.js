@@ -572,6 +572,8 @@ export default {
       newPassword: 'Choose a new password',
       notConfigured: 'The server is not set up yet',
     },
+    firstName: 'First name',
+    lastName: 'Last name',
     email: 'Email',
     password: 'Password',
     newPassword: 'New password',
@@ -596,6 +598,7 @@ export default {
     passwordUpdated: 'Password updated',
     notConfiguredText: 'To create accounts, the app needs to be connected to Supabase (see SUPABASE.md). Meanwhile you can try the demo.',
     errors: {
+      name: 'Enter your first and last name.',
       email: 'Enter a valid email.',
       passwordRequired: 'Enter your password.',
       credentials: 'The email or password is incorrect.',
@@ -629,17 +632,27 @@ export default {
     disabled: 'Fingerprint or face unlock turned off',
   },
 
+  profile: {
+    title: "What's your name?",
+    text: "Add your first and last name: it's what you'll see in the account list instead of your email.",
+    later: 'Later',
+    add: 'Add name',
+    edit: 'Edit name',
+    saved: 'Name saved',
+    needsConnection: 'You need a connection to save your name.',
+  },
+
   accounts: {
-    menuLabel: 'Account in use: {email}. Switch account',
+    menuLabel: 'Account in use: {name}. Switch account',
     title: 'Accounts on this device',
     active: 'In use',
     add: 'Add another account',
     addTitle: 'Add another account',
     addHint: 'For example, your work account. Then you can switch between accounts with one tap, without signing out.',
-    backTo: 'Back to {email}',
+    backTo: 'Back to {name}',
     manage: 'Manage this account',
     hint: "Each account has its own data. Switching accounts doesn't sign out of any of them.",
-    switched: "You're now using {email}",
+    switched: "You're now using {name}'s account",
     limit: 'You can have up to {n} accounts on this device.',
   },
 

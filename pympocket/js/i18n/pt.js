@@ -572,6 +572,8 @@ export default {
       newPassword: 'Escolha uma nova senha',
       notConfigured: 'Falta configurar o servidor',
     },
+    firstName: 'Nome',
+    lastName: 'Sobrenome',
     email: 'E-mail',
     password: 'Senha',
     newPassword: 'Nova senha',
@@ -596,6 +598,7 @@ export default {
     passwordUpdated: 'Senha atualizada',
     notConfiguredText: 'Para criar contas é preciso conectar o app ao Supabase (veja SUPABASE.md). Enquanto isso, você pode testar a demonstração.',
     errors: {
+      name: 'Informe seu nome e sobrenome.',
       email: 'Informe um e-mail válido.',
       passwordRequired: 'Informe sua senha.',
       credentials: 'O e-mail ou a senha estão incorretos.',
@@ -629,17 +632,27 @@ export default {
     disabled: 'Você desativou o desbloqueio com digital ou rosto',
   },
 
+  profile: {
+    title: 'Qual é o seu nome?',
+    text: 'Adicione seu nome e sobrenome: é o que você vai ver na lista de contas no lugar do e-mail.',
+    later: 'Mais tarde',
+    add: 'Adicionar nome',
+    edit: 'Editar nome',
+    saved: 'Nome salvo',
+    needsConnection: 'Você precisa de conexão para salvar o nome.',
+  },
+
   accounts: {
-    menuLabel: 'Conta em uso: {email}. Trocar de conta',
+    menuLabel: 'Conta em uso: {name}. Trocar de conta',
     title: 'Contas neste dispositivo',
     active: 'Em uso',
     add: 'Adicionar outra conta',
     addTitle: 'Adicione outra conta',
     addHint: 'Por exemplo, a do seu trabalho. Depois você troca de conta com um toque, sem sair.',
-    backTo: 'Voltar para {email}',
+    backTo: 'Voltar para {name}',
     manage: 'Gerenciar esta conta',
     hint: 'Cada conta tem seus próprios dados. Trocar de conta não encerra a sessão de nenhuma.',
-    switched: 'Agora você está usando {email}',
+    switched: 'Agora você está usando a conta de {name}',
     limit: 'Você pode ter até {n} contas neste dispositivo.',
   },
 

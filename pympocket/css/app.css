@@ -657,3 +657,7 @@ body.locked { overflow: hidden; }
 .account-row[aria-current='true'] { background: var(--accent-soft); border-color: var(--accent); }
 .account-row-email { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .account-active { display: inline-flex; align-items: center; gap: 4px; font-size: 0.8rem; color: var(--accent-strong); font-weight: 600; }
+.account-row-text { flex: 1; min-width: 0; display: grid; }
+.account-row-text .account-row-email { flex: none; }
+.account-row-sub { font-size: 0.8rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lock-user { text-align: center; margin: 0; }

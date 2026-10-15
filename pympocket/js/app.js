@@ -12,7 +12,7 @@ import { ensureRates, initRates, refreshRates } from './rates.js';
 import { processRecurring } from './recurring.js';
 import { notifyIfDue } from './habits.js';
 import { formatDateTime } from './format.js';
-import { closeDialog, confirmDialog, installEventDelegation, onClick, openDialog, toast } from './ui.js';
+import { closeDialog, confirmDialog, installEventDelegation, onClick, onSubmit, openDialog, toast } from './ui.js';
 import { PALETTE } from './defaults.js';
 import { isDemo, loadDemo } from './demo.js';
 import { APP_URL, DEMO_ONLY } from './config.js';
@@ -96,7 +96,7 @@ function avatar(account, size = '') {
   let hash = 0;
   for (const ch of account.id) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
   const color = PALETTE[hash % PALETTE.length];
-  return `<span class="avatar ${size}" style="--avatar:${h(color)}" aria-hidden="true">${h(account.email.charAt(0).toUpperCase())}</span>`;
+  return `<span class="avatar ${size}" style="--avatar:${h(color)}" aria-hidden="true">${h(auth.accountLabel(account).charAt(0).toUpperCase())}</span>`;
 }
 
 function renderAccountButton() {
@@ -107,8 +107,9 @@ function renderAccountButton() {
     return;
   }
   btn.hidden = false;
-  btn.innerHTML = `${avatar(user)}<span class="account-email">${h(user.email)}</span>${icon('chevron-down')}`;
-  btn.setAttribute('aria-label', t('accounts.menuLabel', { email: user.email }));
+  btn.innerHTML = `${avatar(user)}<span class="account-email">${h(auth.accountLabel(user))}</span>${icon('chevron-down')}`;
+  btn.setAttribute('aria-label', t('accounts.menuLabel', { name: auth.accountLabel(user) }));
+  btn.title = user.email;
 }
 
 function openAccountMenu() {
@@ -119,7 +120,7 @@ function openAccountMenu() {
     <ul class="account-list">${accounts
       .map(
         (a) => `<li><button type="button" class="account-row" data-action="switch-account" data-id="${h(a.id)}" ${a.active ? 'aria-current="true"' : ''}>
-          ${avatar(a, 'avatar-lg')}<span class="account-row-email">${h(a.email)}</span>
+          ${avatar(a, 'avatar-lg')}<span class="account-row-text"><span class="account-row-email">${h(auth.accountLabel(a))}</span>${a.name ? `<span class="account-row-sub">${h(a.email)}</span>` : ''}</span>
           ${a.active ? `<span class="account-active">${icon('check')} ${h(t('accounts.active'))}</span>` : ''}
         </button></li>`,
       )
@@ -131,6 +132,64 @@ function openAccountMenu() {
     <p class="muted small">${h(t('accounts.hint'))}</p>
   </div>`);
 }
+
+// ---------- Nombre de la cuenta ----------
+
+const NAME_ASKED_KEY = 'pympocket.nameAsked';
+
+function nameForm({ required = false } = {}) {
+  const [first = '', ...rest] = (auth.currentUser()?.name ?? '').split(' ');
+  openDialog(`<form class="sheet sheet-small" data-form="profile-name" novalidate>
+    <header class="sheet-header"><h2>${h(t('profile.title'))}</h2>
+      <button type="button" class="btn-icon" data-action="close-dialog" aria-label="${h(t('common.close'))}">${icon('close')}</button></header>
+    <p class="muted">${h(t('profile.text'))}</p>
+    <div class="grid-2">
+      <label>${h(t('auth.firstName'))}<input name="firstName" autocomplete="given-name" maxlength="50" required autofocus value="${h(first)}"></label>
+      <label>${h(t('auth.lastName'))}<input name="lastName" autocomplete="family-name" maxlength="50" required value="${h(rest.join(' '))}"></label>
+    </div>
+    <p class="form-error" role="alert"></p>
+    <div class="sheet-actions">
+      ${required ? '' : `<button type="button" class="btn btn-ghost" data-action="close-dialog">${h(t('profile.later'))}</button>`}
+      <button class="btn btn-primary">${h(t('common.save'))}</button>
+    </div>
+  </form>`);
+}
+
+/** Si la cuenta en uso no tiene nombre, lo pide (una vez por sesión del navegador). Devuelve si lo pidió. */
+async function askNameIfMissing() {
+  try {
+    await auth.refreshProfile();
+  } catch {}
+  const user = auth.currentUser();
+  const key = `${NAME_ASKED_KEY}.${user?.id}`;
+  if (!user || user.name || sessionStorage.getItem(key)) return false;
+  sessionStorage.setItem(key, '1');
+  nameForm();
+  return true;
+}
+
+onClick({ 'edit-name': () => nameForm() });
+
+onSubmit({
+  'profile-name': async (data, form) => {
+    const error = form.querySelector('.form-error');
+    const firstName = data.get('firstName').trim().replace(/\s+/g, ' ');
+    const lastName = data.get('lastName').trim().replace(/\s+/g, ' ');
+    if (!firstName || !lastName) return (error.textContent = t('auth.errors.name'));
+    if (!navigator.onLine) return (error.textContent = t('profile.needsConnection'));
+    form.querySelector('button.btn-primary').disabled = true;
+    try {
+      await auth.updateName(firstName, lastName);
+      closeDialog();
+      renderAccountButton();
+      scheduleRender();
+      toast(t('profile.saved'), { tone: 'success' });
+    } catch (err) {
+      error.textContent = authErrorText(err);
+      form.querySelector('button.btn-primary').disabled = false;
+    }
+  },
+});
 
 /** Antes de cambiar de cuenta, intenta subir lo pendiente (sin esperar más de unos segundos). */
 const flushQuickly = () => Promise.race([flush().catch(() => {}), sleep(3000)]);
@@ -304,11 +363,14 @@ async function startApp({ demo = false, offerBiometric: offer = false } = {}) {
     const switched = sessionStorage.getItem(SWITCHED_KEY);
     if (switched) {
       sessionStorage.removeItem(SWITCHED_KEY);
-      toast(t('accounts.switched', { email: switched }), { tone: 'success' });
+      toast(t('accounts.switched', { name: switched }), { tone: 'success' });
     }
     onSyncStatus(renderSyncBadge);
     if (imported) toast(t('sync.imported', { n: imported }), { tone: 'success', timeout: 7000 });
-    if (offer) offerBiometric();
+    // Cuentas sin nombre (creadas antes de pedirlo): se ofrece completarlo.
+    askNameIfMissing().then((asked) => {
+      if (!asked && offer) offerBiometric();
+    });
     watchLock();
   }
 
@@ -395,7 +457,7 @@ onClick({
     if (!target || target.active) return closeDialog();
     await flushQuickly();
     auth.switchAccount(target.id);
-    sessionStorage.setItem(SWITCHED_KEY, target.email);
+    sessionStorage.setItem(SWITCHED_KEY, auth.accountLabel(target));
     reloadHome();
   },
   'add-account': async () => {
